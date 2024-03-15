@@ -1,0 +1,312 @@
+diff --git a/node_modules/coinselect-segwit/accumulative.js b/node_modules/coinselect-segwit/accumulative.js
+index 42fd28f..69b5c40 100644
+--- a/node_modules/coinselect-segwit/accumulative.js
++++ b/node_modules/coinselect-segwit/accumulative.js
+@@ -2,7 +2,7 @@ var utils = require('./utils')
+ 
+ // add inputs until we reach or surpass the target value (or deplete)
+ // worst-case: O(n)
+-module.exports = function accumulative (utxos, outputs, feeRate) {
++module.exports = function accumulative (utxos, outputs, feeRate, changeAddr) {
+   if (!isFinite(utils.uintOrNaN(feeRate))) return {}
+   var bytesAccum = utils.transactionBytes([], outputs)
+ 
+@@ -31,7 +31,7 @@ module.exports = function accumulative (utxos, outputs, feeRate) {
+     // go again?
+     if (inAccum < outAccum + fee) continue
+ 
+-    return utils.finalize(inputs, outputs, feeRate)
++    return utils.finalize(inputs, outputs, feeRate, changeAddr)
+   }
+ 
+   return { fee: feeRate * bytesAccum }
+diff --git a/node_modules/coinselect-segwit/blackjack.js b/node_modules/coinselect-segwit/blackjack.js
+index 316568b..69b3abc 100644
+--- a/node_modules/coinselect-segwit/blackjack.js
++++ b/node_modules/coinselect-segwit/blackjack.js
+@@ -2,7 +2,8 @@ var utils = require('./utils')
+ 
+ // only add inputs if they don't bust the target value (aka, exact match)
+ // worst-case: O(n)
+-module.exports = function blackjack (utxos, outputs, feeRate) {
++module.exports = function blackjack (utxos, outputs, feeRate, changeAddr) {
++ 
+   if (!isFinite(utils.uintOrNaN(feeRate))) return {}
+ 
+   var bytesAccum = utils.transactionBytes([], outputs)
+@@ -28,7 +29,7 @@ module.exports = function blackjack (utxos, outputs, feeRate) {
+     // go again?
+     if (inAccum < outAccum + fee) continue
+ 
+-    return utils.finalize(inputs, outputs, feeRate)
++    return utils.finalize(inputs, outputs, feeRate, changeAddr)
+   }
+ 
+   return { fee: feeRate * bytesAccum }
+diff --git a/node_modules/coinselect-segwit/index.d.ts b/node_modules/coinselect-segwit/index.d.ts
+index 3abf5db..db76bca 100644
+--- a/node_modules/coinselect-segwit/index.d.ts
++++ b/node_modules/coinselect-segwit/index.d.ts
+@@ -1,24 +1,29 @@
+ export interface UTXO {
+-    txid: string | Uint8Array,
+-    vout: number,
+-    value: number,
+-    nonWitnessUtxo? : Uint8Array,
+-    witnessUtxo? : {
+-        script: Uint8Array,
+-        value: number
+-    }
+-    redeemScript?: Uint8Array,
+-    witnessScript?: Uint8Array,
+-    isTaproot?: boolean
++  txid: string | Uint8Array;
++  vout: number;
++  value: number;
++  nonWitnessUtxo?: Uint8Array;
++  witnessUtxo?: {
++    script: Uint8Array;
++    value: number;
++  };
++  redeemScript?: Uint8Array;
++  witnessScript?: Uint8Array;
++  isTaproot?: boolean;
+ }
+ export interface Target {
+-    address?: string,
+-    script?: Uint8Array,
+-    value?: number
++  address?: string;
++  script?: Uint8Array;
++  value?: number;
+ }
+ export interface SelectedUTXO {
+-    inputs?: UTXO[],
+-    outputs?: Target[],
+-    fee: number
++  inputs?: UTXO[];
++  outputs?: Target[];
++  fee: number;
+ }
+-export default function coinSelect(utxos: UTXO[], outputs: Target[], feeRate: number): SelectedUTXO;
++export default function coinSelect(
++  utxos: UTXO[],
++  outputs: Target[],
++  feeRate: number,
++  changeAddr?: string
++): SelectedUTXO;
+diff --git a/node_modules/coinselect-segwit/index.js b/node_modules/coinselect-segwit/index.js
+index 19aa484..41c660b 100644
+--- a/node_modules/coinselect-segwit/index.js
++++ b/node_modules/coinselect-segwit/index.js
+@@ -7,15 +7,15 @@ function utxoScore (x, feeRate) {
+   return x.value - (feeRate * utils.inputBytes(x))
+ }
+ 
+-module.exports = function coinSelect (utxos, outputs, feeRate) {
++module.exports = function coinSelect (utxos, outputs, feeRate, changeAddr) {
+   utxos = utxos.concat().sort(function (a, b) {
+     return utxoScore(b, feeRate) - utxoScore(a, feeRate)
+   })
+ 
+   // attempt to use the blackjack strategy first (no change output)
+-  var base = blackjack(utxos, outputs, feeRate)
++  var base = blackjack(utxos, outputs, feeRate, changeAddr)
+   if (base.inputs) return base
+ 
+   // else, try the accumulative strategy
+-  return accumulative(utxos, outputs, feeRate)
++  return accumulative(utxos, outputs, feeRate, changeAddr)
+ }
+diff --git a/node_modules/coinselect-segwit/utils.js b/node_modules/coinselect-segwit/utils.js
+index 66a05d3..a62a460 100644
+--- a/node_modules/coinselect-segwit/utils.js
++++ b/node_modules/coinselect-segwit/utils.js
+@@ -1,93 +1,125 @@
+ // baseline estimates, used to improve performance
+-var TX_EMPTY_SIZE = 4 + 1 + 1 + 4
+-var TX_INPUT_BASE = 32 + 4 + 1 + 4
+-var TX_INPUT_PUBKEYHASH = 107
+-var TX_INPUT_SEGWIT = 27
+-var TX_INPUT_TAPROOT = 17 // round up 16.5 bytes
+-var TX_OUTPUT_BASE = 8 + 1
+-var TX_OUTPUT_PUBKEYHASH = 25
+-var TX_OUTPUT_SCRIPTHASH = 23
+-var TX_OUTPUT_SEGWIT = 22
+-var TX_OUTPUT_SEGWIT_SCRIPTHASH = 34
+-
+-function inputBytes (input) {
+-  return TX_INPUT_BASE + (input.redeemScript ? input.redeemScript.length : 0) +
+-    (input.witnessScript ? parseInt(input.witnessScript.length / 4)
+-      : input.isTaproot ? TX_INPUT_TAPROOT
+-        : input.witnessUtxo ? TX_INPUT_SEGWIT
+-          : !input.redeemScript ? TX_INPUT_PUBKEYHASH : 0)
++var TX_EMPTY_SIZE = 4 + 1 + 1 + 4 + 2;
++var TX_INPUT_BASE = 32 + 4 + 1 + 4;
++var TX_INPUT_PUBKEYHASH = 107;
++var TX_INPUT_SEGWIT = 27;
++var TX_INPUT_TAPROOT = 17; // round up 16.5 bytes
++var TX_OUTPUT_BASE = 8 + 1;
++var TX_OUTPUT_PUBKEYHASH = 25;
++var TX_OUTPUT_SCRIPTHASH = 23;
++var TX_OUTPUT_SEGWIT = 22;
++var TX_OUTPUT_SEGWIT_SCRIPTHASH = 34;
++
++function inputBytes(input) {
++
++  return (
++    TX_INPUT_BASE +
++      //P2SH sigScript has 1 bytes more than redeemScrip
++    (input.redeemScript ?  input.redeemScript.length+1 : 0) +
++    //P2WSH
++    (input.witnessScript
++      ? parseInt(input.witnessScript.length / 4)
++      : //P2TR
++      input.isTaproot
++      ? TX_INPUT_TAPROOT
++      : //P2WPKH
++      input.witnessUtxo
++      ? TX_INPUT_SEGWIT
++      : //P2PKH
++      !input.redeemScript
++      ? TX_INPUT_PUBKEYHASH
++      : 0)
++  );
+ }
+ 
+-function outputBytes (output) {
+-  let nBytes = TX_OUTPUT_BASE
++function outputBytes(output) {
++  let nBytes = TX_OUTPUT_BASE;
+   if (output.script) {
+-    nBytes += output.script.length
++    nBytes += output.script.length;
+   } else if (output.address) {
+-    if (output.address.startsWith('bc1') || output.address.startsWith('tb1')) {
++    if (output.address.startsWith("bc1") || output.address.startsWith("tb1")) {
+       if (output.address.length === 42) {
+-        nBytes += TX_OUTPUT_SEGWIT
++        nBytes += TX_OUTPUT_SEGWIT;
+       } else {
+-        nBytes += TX_OUTPUT_SEGWIT_SCRIPTHASH
++        nBytes += TX_OUTPUT_SEGWIT_SCRIPTHASH;
+       }
+-    } else if (output.address.startsWith('3') || output.address.startsWith('2')) {
+-      nBytes += TX_OUTPUT_SCRIPTHASH
++    } else if (
++      output.address.startsWith("3") ||
++      output.address.startsWith("2")
++    ) {
++      nBytes += TX_OUTPUT_SCRIPTHASH;
+     } else {
+-      nBytes += TX_OUTPUT_PUBKEYHASH
++      nBytes += TX_OUTPUT_PUBKEYHASH;
+     }
+   } else {
+-    nBytes += TX_OUTPUT_PUBKEYHASH
++    nBytes += TX_OUTPUT_PUBKEYHASH;
+   }
+ 
+-  return nBytes
++  return nBytes;
+ }
+ 
+-function dustThreshold (output, feeRate) {
++function dustThreshold(output, feeRate) {
+   /* ... classify the output for input estimate  */
+-  return inputBytes({}) * feeRate
++  return inputBytes({}) * feeRate;
+ }
+ 
+-function transactionBytes (inputs, outputs) {
+-  return TX_EMPTY_SIZE +
+-    inputs.reduce(function (a, x) { return a + inputBytes(x) }, 0) +
+-    outputs.reduce(function (a, x) { return a + outputBytes(x) }, 0)
++function transactionBytes(inputs, outputs) {
++
++  return (
++    TX_EMPTY_SIZE +
++    inputs.reduce(function (a, x) {
++      return a + inputBytes(x);
++    }, 0) +
++    outputs.reduce(function (a, x) {
++      return a + outputBytes(x);
++    }, 0)
++  );
+ }
+ 
+-function uintOrNaN (v) {
+-  if (typeof v !== 'number') return NaN
+-  if (!isFinite(v)) return NaN
+-  if (Math.floor(v) !== v) return NaN
+-  if (v < 0) return NaN
+-  return v
++function uintOrNaN(v) {
++  if (typeof v !== "number") return NaN;
++  if (!isFinite(v)) return NaN;
++  if (Math.floor(v) !== v) return NaN;
++  if (v < 0) return NaN;
++  return v;
+ }
+ 
+-function sumForgiving (range) {
+-  return range.reduce(function (a, x) { return a + (isFinite(x.value) ? x.value : 0) }, 0)
++function sumForgiving(range) {
++  return range.reduce(function (a, x) {
++    return a + (isFinite(x.value) ? x.value : 0);
++  }, 0);
+ }
+ 
+-function sumOrNaN (range) {
+-  return range.reduce(function (a, x) { return a + uintOrNaN(x.value) }, 0)
++function sumOrNaN(range) {
++  return range.reduce(function (a, x) {
++    return a + uintOrNaN(x.value);
++  }, 0);
+ }
+ 
+-var BLANK_OUTPUT = outputBytes({})
++var BLANK_OUTPUT = outputBytes({});
+ 
+-function finalize (inputs, outputs, feeRate) {
+-  var bytesAccum = transactionBytes(inputs, outputs)
+-  var feeAfterExtraOutput = feeRate * (bytesAccum + BLANK_OUTPUT)
+-  var remainderAfterExtraOutput = sumOrNaN(inputs) - (sumOrNaN(outputs) + feeAfterExtraOutput)
++function finalize(inputs, outputs, feeRate, changeAddr) {
++  var bytesAccum = transactionBytes(inputs, outputs);
++  var feeAfterExtraOutput =
++    feeRate *
++    (bytesAccum +
++      (changeAddr ? outputBytes({ address: changeAddr }) : BLANK_OUTPUT));
++  var remainderAfterExtraOutput =
++    sumOrNaN(inputs) - (sumOrNaN(outputs) + feeAfterExtraOutput);
+ 
+   // is it worth a change output?
+   if (remainderAfterExtraOutput > dustThreshold({}, feeRate)) {
+-    outputs = outputs.concat({ value: remainderAfterExtraOutput })
++    outputs = outputs.concat({ value: remainderAfterExtraOutput });
+   }
+ 
+-  var fee = sumOrNaN(inputs) - sumOrNaN(outputs)
+-  if (!isFinite(fee)) return { fee: feeRate * bytesAccum }
++  var fee = sumOrNaN(inputs) - sumOrNaN(outputs);
++  if (!isFinite(fee)) return { fee: feeRate * bytesAccum };
+ 
+   return {
+     inputs: inputs,
+     outputs: outputs,
+-    fee: fee
+-  }
++    fee: fee,
++  };
+ }
+ 
+ module.exports = {
+@@ -98,5 +130,5 @@ module.exports = {
+   sumOrNaN: sumOrNaN,
+   sumForgiving: sumForgiving,
+   transactionBytes: transactionBytes,
+-  uintOrNaN: uintOrNaN
+-}
++  uintOrNaN: uintOrNaN,
++};
