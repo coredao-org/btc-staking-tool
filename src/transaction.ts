@@ -186,15 +186,6 @@ export const buildStakeTransaction = async ({
     }
   }
 
-  // //Check validator and reward address in the case of staking
-  // if (!isRestaking) {
-
-  // } else {
-  //   //fetch the previous stake options when validator or reward address is empty
-  //   if (!rewardAddress || !validatorAddress) {
-  //   }
-  // }
-
   const res = await provider.getUTXOs(account!);
 
   const rawTxMap: Record<string, string> = {};
