@@ -55,7 +55,7 @@ program
     .requiredOption("-vaddr, --validatoraddress <validatoraddress>", "Core validator address to stake to.")
     .option("-w, --witness", "Use segwit or not.")
     .option("-br, --bitcoinrpc <bitcoinrpc>", "The Bitcoin RPC service to use, default to https://mempool.space/. ")
-    .option("--fee <fee>", "Transaction fee s)slow a)average f)fast, please choose in (s, a ,f) OR a customized number in SAT, default to a)average.")
+    .option("--fee <fee>", "Transaction fee in every bytes s)slow a)average f)fast, please choose in (s, a ,f) OR a customized number in SAT, default to a)average.")
     .option("-r, --redeemscript <redeemscript>", "The redeem script which was returned in the stake action.")
     .action((args) => __awaiter(void 0, void 0, void 0, function* () {
     const bitcoinnetwork = constant_1.BitcoinNetworkMap[args.bitcoinnetwork];

@@ -151,13 +151,6 @@ const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* 
             console.log(e);
         }
     }
-    // //Check validator and reward address in the case of staking
-    // if (!isRestaking) {
-    // } else {
-    //   //fetch the previous stake options when validator or reward address is empty
-    //   if (!rewardAddress || !validatorAddress) {
-    //   }
-    // }
     const res = yield provider.getUTXOs(account);
     const rawTxMap = {};
     if (addressType === "p2pkh" || addressType === "p2sh") {
