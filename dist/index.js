@@ -46,7 +46,7 @@ program
     .description("Stake BTC")
     .requiredOption("-acc, --account <account>", "The Bitcon address used to stake.")
     .requiredOption("-privkey, --privatekey <privatekey>", "The private key used to sign the transaction, which should be associated with --account. Hex format.")
-    .requiredOption("-amt, --amount <amount>", "Amount of BTC to stake, measured in SAT.")
+    .option("-amt, --amount <amount>", "Amount of BTC to stake, measured in SAT, default to all amount of BTC")
     .option("-bn, --bitcoinnetwork <bitcoinnetwork>", "The Bitcoin network to operate on, choose between 1~2. 1)Mainnet 2)Testnet, default to 1)Mainnet.")
     .option("-cn, --corenetwork <corenetwork>", "The Core network to transmit the stake transaction to, choose between 1~3. 1)Mainnet 2)Devnet 3)Testnet, default to 1)Mainnet.")
     .requiredOption("-lt, --locktime <locktime>", "The unix timestamp in seconds to lock the BTC assets up to. e.g. 1711983981")
@@ -56,6 +56,7 @@ program
     .option("-w, --witness", "Use segwit or not.")
     .option("-br, --bitcoinrpc <bitcoinrpc>", "The Bitcoin RPC service to use, default to https://mempool.space/. ")
     .option("--fee <fee>", "Transaction fee s)slow a)average f)fast, please choose in (s, a ,f) OR a customized number in SAT, default to a)average.")
+    .option("-r, --redeemscript <redeemscript>", "The redeem script which was returned in the stake action.")
     .action((args) => __awaiter(void 0, void 0, void 0, function* () {
     const bitcoinnetwork = constant_1.BitcoinNetworkMap[args.bitcoinnetwork];
     const corenetwork = constant_1.CoreNetworkMap[args.corenetwork];
@@ -73,6 +74,7 @@ program
         witness: args.witness,
         bitcoinRpc: args.bitcoinrpc,
         fee: fee || args.fee,
+        redeemScript: args.redeemscript,
     });
 }));
 program

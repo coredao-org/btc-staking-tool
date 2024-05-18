@@ -25,17 +25,23 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.getAddressType = void 0;
 const bitcoin = __importStar(require("bitcoinjs-lib"));
-function getAddressType(address, network = bitcoin.networks.bitcoin) {
+function getAddressType(address, network = bitcoin.networks.bitcoin, redeemScript) {
     if (address.startsWith(`${network.bech32}1p`)) {
         bitcoin.address.fromBech32(address);
         return "p2tr";
     }
     if (address.startsWith(network.bech32)) {
-        bitcoin.address.fromBech32(address);
-        return "p2wpkh";
+        const decodeBech32 = bitcoin.address.fromBech32(address);
+        if (decodeBech32.data.length === 20)
+            return "p2wpkh";
+        if (decodeBech32.data.length === 32)
+            return "p2wsh";
     }
     const base58Data = bitcoin.address.fromBase58Check(address);
     if (base58Data.version === Number(network.scriptHash)) {
+        if (redeemScript) {
+            return "p2sh";
+        }
         return "p2sh-p2wpkh";
     }
     if (base58Data.version === Number(network.pubKeyHash)) {

@@ -57,11 +57,13 @@ const validatorSignature = (pubkey, msghash, signature) => ECPair.fromPublicKey(
  * @param {StakeParams} params - Stake parameters
  * @returns {Promise<{ txId: string; scriptAddress: string; cltvScript: string; }>} - Transaction ID, script address, and CLTV script
  */
-const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness, lockTime, account, amount, validatorAddress, rewardAddress, publicKey, privateKey, bitcoinNetwork, coreNetwork, type, bitcoinRpc, fee, }) {
+const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness, lockTime, account, amount, validatorAddress, rewardAddress, publicKey, privateKey, bitcoinNetwork, coreNetwork, type, bitcoinRpc, fee, redeemScript, }) {
     const chainId = constant_2.CoreChainNetworks[coreNetwork].chainId;
     const network = bitcoinNetwork == "mainnet"
         ? bitcoin.networks.bitcoin
         : bitcoin.networks.testnet;
+    let isRestaking = false;
+    let preStakeOptions;
     const provider = new provider_1.Provider({
         network,
         bitcoinRpc,
@@ -71,9 +73,9 @@ const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* 
     if (!publicKey) {
         publicKey = keyPair.publicKey.toString("hex");
     }
-    let addressType = (0, address_1.getAddressType)(account, network);
     //We only support  P2PKH  P2WPKH P2SH-P2WPKH P2TR address
     let payment;
+    let addressType = (0, address_1.getAddressType)(account, network, redeemScript);
     if (addressType === "p2pkh") {
         payment = bitcoin.payments.p2pkh({
             pubkey: keyPair.publicKey,
@@ -102,6 +104,26 @@ const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* 
             network,
         });
     }
+    else if (redeemScript) {
+        const redeemScriptBuf = Buffer.from(redeemScript.toString("hex"), "hex");
+        if (addressType === "p2sh") {
+            payment = bitcoin.payments.p2sh({
+                redeem: {
+                    output: redeemScriptBuf,
+                    network,
+                },
+                network,
+            });
+        }
+        else if (addressType === "p2wsh") {
+            payment = bitcoin.payments.p2wsh({
+                redeem: {
+                    output: redeemScriptBuf,
+                    network,
+                },
+            });
+        }
+    }
     if (!payment) {
         throw new Error("payment is undefined");
     }
@@ -111,9 +133,34 @@ const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* 
     if (!payment.output) {
         throw new Error("failed to create redeem script");
     }
+    //Re-staking
+    if (!!redeemScript && (addressType === "p2wsh" || addressType === "p2sh")) {
+        try {
+            const { options, type } = (0, script_1.parseCLTVScript)({
+                cltvScript: redeemScript,
+                witness: addressType === "p2wsh",
+            });
+            if (options.lockTime > 0 &&
+                type >= constant_1.RedeemScriptType.PUBLIC_KEY_SCRIPT &&
+                type <= constant_1.RedeemScriptType.MULTI_SIG_HASH_SCRIPT) {
+                isRestaking = true;
+                preStakeOptions = options;
+            }
+        }
+        catch (e) {
+            console.log(e);
+        }
+    }
+    // //Check validator and reward address in the case of staking
+    // if (!isRestaking) {
+    // } else {
+    //   //fetch the previous stake options when validator or reward address is empty
+    //   if (!rewardAddress || !validatorAddress) {
+    //   }
+    // }
     const res = yield provider.getUTXOs(account);
     const rawTxMap = {};
-    if (addressType === "p2pkh") {
+    if (addressType === "p2pkh" || addressType === "p2sh") {
         for (let i = 0; i < res.length; i++) {
             const utxo = res[i];
             if (!rawTxMap[utxo.txid]) {
@@ -122,9 +169,11 @@ const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* 
             }
         }
     }
-    const utxos = res.map((utxo) => (Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign({}, utxo), (addressType.includes("p2pkh") && {
+    const utxos = res.map((utxo) => (Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign({}, utxo), ((addressType.includes("p2pkh") || addressType.includes("p2sh")) && {
         nonWitnessUtxo: Buffer.from(rawTxMap[utxo.txid], "hex"),
-    })), ((addressType.includes("p2wpkh") || addressType.includes("p2tr")) && {
+    })), ((addressType.includes("p2wpkh") ||
+        addressType.includes("p2tr") ||
+        addressType.includes("p2wsh")) && {
         witnessUtxo: {
             script: addressType.includes("p2sh")
                 ? payment.redeem.output
@@ -133,46 +182,46 @@ const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* 
         },
     })), (addressType.includes("p2sh") && {
         redeemScript: payment.redeem.output,
+    })), (addressType.includes("p2wsh") && {
+        witnessScript: payment.redeem.output,
     })), (addressType.includes("p2tr") && {
         isTaproot: true,
     })), { sequence: 0xffffffff - 1 })));
     //time lock script
-    let redeemScript;
+    let script;
     //P2PKH
     if (type === constant_1.RedeemScriptType.PUBLIC_KEY_HASH_SCRIPT) {
-        redeemScript = script_1.CLTVScript.P2PKH({
+        script = script_1.CLTVScript.P2PKH({
             lockTime,
             pubkey: publicKey,
         });
     }
     else {
         //P2PK
-        redeemScript = script_1.CLTVScript.P2PK({
+        script = script_1.CLTVScript.P2PK({
             lockTime,
             pubkey: publicKey,
         });
     }
     const lockScript = (witness ? bitcoin.payments.p2wsh : bitcoin.payments.p2sh)({
         redeem: {
-            output: redeemScript,
+            output: script,
         },
         network,
     }).output;
     // Address for lock script
     const scriptAddress = bitcoin.address.fromOutputScript(lockScript, network);
     const targets = [
-        //time lock output
-        {
+        Object.assign(Object.assign({}, (amount && {
             value: new bignumber_js_1.default(amount).toNumber(),
-            script: lockScript,
-        },
+        })), { script: lockScript }),
         //OP_RETURN
         {
             script: (0, script_1.buildOPReturnScript)({
                 chainId,
                 validatorAddress,
                 rewardAddress, // 20 bytes
-                redeemScript: redeemScript.toString("hex"),
+                redeemScript: script.toString("hex"),
                 coreFee: 0,
                 isMultisig: false,
                 lockTime,
@@ -181,14 +230,41 @@ const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* 
             value: 0,
         },
     ];
-    let { inputs, outputs } = (0, coinselect_segwit_1.default)(utxos, targets, bytesFee, account);
+    let { inputs, outputs } = amount
+        ? (0, coinselect_segwit_1.default)(utxos, targets, bytesFee, account)
+        : (0, split_1.default)(utxos, targets, bytesFee);
     if (!inputs) {
         throw new Error("insufficient balance");
+    }
+    if (!outputs) {
+        throw new Error("failed to caculate transaction fee");
+    }
+    if (isRestaking && preStakeOptions) {
+        let signatureSize = 0;
+        inputs.forEach(() => {
+            if (type === constant_1.RedeemScriptType.MULTI_SIG_SCRIPT &&
+                preStakeOptions.m &&
+                preStakeOptions.m >= 1) {
+                signatureSize += (72 * preStakeOptions.m) / (witness ? 4 : 1);
+            }
+            else if (type === constant_1.RedeemScriptType.PUBLIC_KEY_HASH_SCRIPT) {
+                signatureSize += (72 + 66) / (witness ? 4 : 1);
+            }
+            else if (type === constant_1.RedeemScriptType.PUBLIC_KEY_SCRIPT) {
+                signatureSize += 72 / (witness ? 4 : 1);
+            }
+        });
+        const signatureSizeFee = new bignumber_js_1.default(signatureSize)
+            .multipliedBy(new bignumber_js_1.default(bytesFee))
+            .toNumber();
+        outputs[0].value = Math.floor(outputs[0].value - signatureSizeFee);
     }
     const psbt = new bitcoin.Psbt({
         network,
     });
-    inputs === null || inputs === void 0 ? void 0 : inputs.forEach((input) => psbt.addInput(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign({ hash: typeof input.txid === "string" ? input.txid : Buffer.from(input.txid), index: input.vout }, (input.nonWitnessUtxo
+    console.log(preStakeOptions === null || preStakeOptions === void 0 ? void 0 : preStakeOptions.lockTime);
+    isRestaking && preStakeOptions && psbt.setLocktime(preStakeOptions === null || preStakeOptions === void 0 ? void 0 : preStakeOptions.lockTime);
+    inputs === null || inputs === void 0 ? void 0 : inputs.forEach((input) => psbt.addInput(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign({ hash: typeof input.txid === "string" ? input.txid : Buffer.from(input.txid), index: input.vout }, (input.nonWitnessUtxo
         ? {
             nonWitnessUtxo: Buffer.from(input.nonWitnessUtxo),
         }
@@ -203,7 +279,7 @@ const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* 
         ? { redeemScript: Buffer.from(input.redeemScript) }
         : {})), (input.witnessScript
         ? { witnessScript: Buffer.from(input.witnessScript) }
-        : {})), (input.isTaproot ? { tapInternalKey: payment.internalPubkey } : {}))));
+        : {})), (input.isTaproot ? { tapInternalKey: payment.internalPubkey } : {})), { sequence: 0xffffffff - 1 })));
     const changeAddress = account;
     outputs === null || outputs === void 0 ? void 0 : outputs.forEach((output) => {
         var _a;
@@ -225,12 +301,19 @@ const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* 
         !psbt.validateSignaturesOfAllInputs(validatorSignature)) {
         throw new Error("signature is invalid");
     }
-    psbt.finalizeAllInputs();
+    if (isRestaking) {
+        psbt.txInputs.forEach((input, idx) => {
+            psbt.finalizeInput(idx, script_1.finalCLTVScripts);
+        });
+    }
+    else {
+        psbt.finalizeAllInputs();
+    }
     const txId = yield provider.broadcast(psbt.extractTransaction().toHex());
     return {
         txId,
         scriptAddress,
-        redeemScript: redeemScript.toString("hex"),
+        script: script.toString("hex"),
     };
 });
 exports.buildStakeTransaction = buildStakeTransaction;
