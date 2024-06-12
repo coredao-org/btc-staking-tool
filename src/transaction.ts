@@ -202,7 +202,7 @@ export const buildStakeTransaction = async ({
 
   const utxos = res.map((utxo) => ({
     ...utxo,
-    ...((addressType.includes("p2pkh") || addressType.includes("p2sh")) && {
+    ...((addressType.includes("p2pkh") || addressType === "p2sh") && {
       nonWitnessUtxo: Buffer.from(rawTxMap[utxo.txid], "hex"),
     }),
     ...((addressType.includes("p2wpkh") ||
@@ -319,7 +319,7 @@ export const buildStakeTransaction = async ({
   const psbt = new bitcoin.Psbt({
     network,
   });
-  console.log(preStakeOptions?.lockTime);
+
   isRestaking && preStakeOptions && psbt.setLocktime(preStakeOptions?.lockTime);
 
   inputs?.forEach((input) =>

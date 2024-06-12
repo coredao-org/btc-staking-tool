@@ -162,7 +162,7 @@ const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* 
             }
         }
     }
-    const utxos = res.map((utxo) => (Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign({}, utxo), ((addressType.includes("p2pkh") || addressType.includes("p2sh")) && {
+    const utxos = res.map((utxo) => (Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign({}, utxo), ((addressType.includes("p2pkh") || addressType === "p2sh") && {
         nonWitnessUtxo: Buffer.from(rawTxMap[utxo.txid], "hex"),
     })), ((addressType.includes("p2wpkh") ||
         addressType.includes("p2tr") ||
@@ -255,7 +255,6 @@ const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* 
     const psbt = new bitcoin.Psbt({
         network,
     });
-    console.log(preStakeOptions === null || preStakeOptions === void 0 ? void 0 : preStakeOptions.lockTime);
     isRestaking && preStakeOptions && psbt.setLocktime(preStakeOptions === null || preStakeOptions === void 0 ? void 0 : preStakeOptions.lockTime);
     inputs === null || inputs === void 0 ? void 0 : inputs.forEach((input) => psbt.addInput(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign(Object.assign({ hash: typeof input.txid === "string" ? input.txid : Buffer.from(input.txid), index: input.vout }, (input.nonWitnessUtxo
         ? {
