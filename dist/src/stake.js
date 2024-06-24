@@ -16,7 +16,7 @@ exports.stake = void 0;
 const constant_1 = require("./constant");
 const transaction_1 = require("./transaction");
 const bignumber_js_1 = __importDefault(require("bignumber.js"));
-const stake = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness = false, lockTime, account, amount, validatorAddress, rewardAddress, privateKey, publicKey, coreNetwork = "mainnet", bitcoinNetwork = "mainnet", bitcoinRpc = "mempool", fee = "avg", }) {
+const stake = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness = false, lockTime, account, amount, validatorAddress, rewardAddress, privateKey, publicKey, coreNetwork = "mainnet", bitcoinNetwork = "mainnet", bitcoinRpc = "mempool", fee = "avg", redeemScript, }) {
     if (!lockTime) {
         throw new Error("LockTime should not be empty");
     }
@@ -29,16 +29,13 @@ const stake = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness = fal
     if (!privateKey) {
         throw new Error("privateKey should not be empty");
     }
-    if (!amount) {
-        throw new Error("Amount should not be empty");
-    }
     if (!validatorAddress) {
         throw new Error("validatorAddress should not be empty");
     }
     if (!rewardAddress) {
         throw new Error("rewardAddress should not be empty");
     }
-    const { txId, scriptAddress, redeemScript } = yield (0, transaction_1.buildStakeTransaction)({
+    const { txId, scriptAddress, script } = yield (0, transaction_1.buildStakeTransaction)({
         witness,
         lockTime: Number(lockTime),
         account,
@@ -52,9 +49,10 @@ const stake = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness = fal
         coreNetwork,
         bitcoinRpc,
         fee,
+        redeemScript,
     });
     console.log(`txId: ${txId}`);
     console.log(`address: ${scriptAddress}`);
-    console.log(`redeemScript: ${redeemScript}`);
+    console.log(`redeemScript: ${script}`);
 });
 exports.stake = stake;

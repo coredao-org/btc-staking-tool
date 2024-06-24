@@ -15,6 +15,7 @@ export const stake = async ({
   bitcoinNetwork = "mainnet",
   bitcoinRpc = "mempool",
   fee = "avg",
+  redeemScript,
 }: Omit<StakeParams, "chainId" | "type">) => {
   if (!lockTime) {
     throw new Error("LockTime should not be empty");
@@ -32,10 +33,6 @@ export const stake = async ({
     throw new Error("privateKey should not be empty");
   }
 
-  if (!amount) {
-    throw new Error("Amount should not be empty");
-  }
-
   if (!validatorAddress) {
     throw new Error("validatorAddress should not be empty");
   }
@@ -44,7 +41,7 @@ export const stake = async ({
     throw new Error("rewardAddress should not be empty");
   }
 
-  const { txId, scriptAddress, redeemScript } = await buildStakeTransaction({
+  const { txId, scriptAddress, script } = await buildStakeTransaction({
     witness,
     lockTime: Number(lockTime),
     account,
@@ -58,8 +55,9 @@ export const stake = async ({
     coreNetwork,
     bitcoinRpc,
     fee,
+    redeemScript,
   });
   console.log(`txId: ${txId}`);
   console.log(`address: ${scriptAddress}`);
-  console.log(`redeemScript: ${redeemScript}`);
+  console.log(`redeemScript: ${script}`);
 };
