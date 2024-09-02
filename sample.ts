@@ -80,7 +80,7 @@ async function StakeBTC() {
   const flag = "SAT+"; // Core/SAT+ identifier
   const validatorAddress = "0x0A53B7e0Ffd97357e444B85f4D683c1d8e22879A"; //Validator address to delegate to.
   const rewardAddress = "0xE9B809ea7464c103862F31F234018e5F87BB3D1e"; //Core address to claim CORE rewards.
-  const chainId = "1112"; //Chain ID, Devnet 1112, Mainnet 1115
+  const chainId = "1112"; //Chain ID, Devnet 1112, Testnet 1115, Mainnet 1116
   const version = 1; //Version 1.
   const coreFee = 0; //Fee paid to porters of CORE, who transmit the BTC staking transaction to Core blockchain.
   const flagHex = Buffer.from(flag, "utf-8").toString("hex").padStart(8, "0");
