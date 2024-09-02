@@ -21,7 +21,7 @@ program
   )
   .requiredOption(
     "-privkey, --privatekey <privatekey>",
-    "The private key used to sign the transaction, which should be associated with --account. Hex format."
+    "The private key used to sign the transaction, which should be associated with --account, separated by commas. Hex format."
   )
   .option(
     "-amt, --amount <amount>",
@@ -32,6 +32,7 @@ program
     "-bn, --bitcoinnetwork <bitcoinnetwork>",
     "The Bitcoin network to operate on, choose between 1~2. 1)Mainnet 2)Testnet, default to 1)Mainnet."
   )
+
   .option(
     "-cn, --corenetwork <corenetwork>",
     "The Core network to transmit the stake transaction to, choose between 1~3. 1)Mainnet 2)Devnet 3)Testnet, default to 1)Mainnet."
@@ -42,7 +43,11 @@ program
   )
   .option(
     "-pubkey, --publickey <publickey>",
-    "The public key used to redeem the BTC assets when locktime expires. Default to the public key associated with --privatekey."
+    "The public key used to redeem the BTC assets when locktime expires. Default to the public key associated with --privatekey, separated by commas"
+  )
+  .option(
+    "-m, --m <m>",
+    "The minimum number of signatures required to authorize a transaction from the set of public keys."
   )
   .requiredOption(
     "-raddr, --rewardaddress <rewardaddress>",
@@ -63,7 +68,7 @@ program
   )
   .option(
     "-r, --redeemscript <redeemscript>",
-    "The redeem script which was returned in the stake action."
+    "The redeem script which was returned in the stake action or was the redeem script of multi signature address."
   )
   .action(async (args) => {
     const bitcoinnetwork = BitcoinNetworkMap[args.bitcoinnetwork];

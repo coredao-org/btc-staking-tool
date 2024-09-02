@@ -16,7 +16,11 @@ export const stake = async ({
   bitcoinRpc = "mempool",
   fee = "avg",
   redeemScript,
-}: Omit<StakeParams, "chainId" | "type">) => {
+  m,
+}: Omit<StakeParams, "chainId" | "type" | "privateKey" | "publicKey"> & {
+  privateKey: string;
+  publicKey?: string;
+}) => {
   if (!lockTime) {
     throw new Error("LockTime should not be empty");
   }
@@ -40,6 +44,9 @@ export const stake = async ({
   if (!rewardAddress) {
     throw new Error("rewardAddress should not be empty");
   }
+  const publicKeys = publicKey?.split(",").map((item: string) => item.trim());
+  const privateKeys = privateKey.split(",").map((item: string) => item.trim());
+  const isLockToMultiSig = publicKeys && publicKeys?.length >= 2 && !!m;
 
   const { txId, scriptAddress, script } = await buildStakeTransaction({
     witness,
@@ -48,14 +55,16 @@ export const stake = async ({
     amount,
     validatorAddress,
     rewardAddress,
-    type: RedeemScriptType.PUBLIC_KEY_HASH_SCRIPT,
-    publicKey,
-    privateKey,
+    publicKey: publicKeys,
+    privateKey: privateKeys,
     bitcoinNetwork,
     coreNetwork,
     bitcoinRpc,
     fee,
     redeemScript,
+    type: isLockToMultiSig
+      ? RedeemScriptType.MULTI_SIG_HASH_SCRIPT
+      : RedeemScriptType.PUBLIC_KEY_HASH_SCRIPT,
   });
   console.log(`txId: ${txId}`);
   console.log(`address: ${scriptAddress}`);

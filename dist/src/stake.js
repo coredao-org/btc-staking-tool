@@ -16,7 +16,7 @@ exports.stake = void 0;
 const constant_1 = require("./constant");
 const transaction_1 = require("./transaction");
 const bignumber_js_1 = __importDefault(require("bignumber.js"));
-const stake = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness = false, lockTime, account, amount, validatorAddress, rewardAddress, privateKey, publicKey, coreNetwork = "mainnet", bitcoinNetwork = "mainnet", bitcoinRpc = "mempool", fee = "avg", redeemScript, }) {
+const stake = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness = false, lockTime, account, amount, validatorAddress, rewardAddress, privateKey, publicKey, coreNetwork = "mainnet", bitcoinNetwork = "mainnet", bitcoinRpc = "mempool", fee = "avg", redeemScript, m, }) {
     if (!lockTime) {
         throw new Error("LockTime should not be empty");
     }
@@ -35,6 +35,9 @@ const stake = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness = fal
     if (!rewardAddress) {
         throw new Error("rewardAddress should not be empty");
     }
+    const publicKeys = publicKey === null || publicKey === void 0 ? void 0 : publicKey.split(",").map((item) => item.trim());
+    const privateKeys = privateKey.split(",").map((item) => item.trim());
+    const isLockToMultiSig = publicKeys && (publicKeys === null || publicKeys === void 0 ? void 0 : publicKeys.length) >= 2 && !!m;
     const { txId, scriptAddress, script } = yield (0, transaction_1.buildStakeTransaction)({
         witness,
         lockTime: Number(lockTime),
@@ -42,14 +45,16 @@ const stake = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness = fal
         amount,
         validatorAddress,
         rewardAddress,
-        type: constant_1.RedeemScriptType.PUBLIC_KEY_HASH_SCRIPT,
-        publicKey,
-        privateKey,
+        publicKey: publicKeys,
+        privateKey: privateKeys,
         bitcoinNetwork,
         coreNetwork,
         bitcoinRpc,
         fee,
         redeemScript,
+        type: isLockToMultiSig
+            ? constant_1.RedeemScriptType.MULTI_SIG_HASH_SCRIPT
+            : constant_1.RedeemScriptType.PUBLIC_KEY_HASH_SCRIPT,
     });
     console.log(`txId: ${txId}`);
     console.log(`address: ${scriptAddress}`);

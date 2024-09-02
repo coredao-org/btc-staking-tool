@@ -48,6 +48,7 @@ const ecc = __importStar(require("tiny-secp256k1"));
 const ecpair_1 = __importDefault(require("ecpair"));
 const constant_2 = require("./constant");
 const address_1 = require("./address");
+const utils_1 = require("./utils");
 // Initialize the elliptic curve library
 const ECPair = (0, ecpair_1.default)(ecc);
 // Verify validator's signature
@@ -57,7 +58,7 @@ const validatorSignature = (pubkey, msghash, signature) => ECPair.fromPublicKey(
  * @param {StakeParams} params - Stake parameters
  * @returns {Promise<{ txId: string; scriptAddress: string; cltvScript: string; }>} - Transaction ID, script address, and CLTV script
  */
-const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness, lockTime, account, amount, validatorAddress, rewardAddress, publicKey, privateKey, bitcoinNetwork, coreNetwork, type, bitcoinRpc, fee, redeemScript, }) {
+const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness, lockTime, account, amount, validatorAddress, rewardAddress, publicKey, privateKey, bitcoinNetwork, coreNetwork, bitcoinRpc, fee, redeemScript, m, type, }) {
     const chainId = constant_2.CoreChainNetworks[coreNetwork].chainId;
     const network = bitcoinNetwork == "mainnet"
         ? bitcoin.networks.bitcoin
@@ -69,11 +70,11 @@ const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* 
         bitcoinRpc,
     });
     const bytesFee = yield provider.getFeeRate(fee);
-    const keyPair = ECPair.fromPrivateKey(Buffer.from(privateKey, "hex"));
-    if (!publicKey) {
-        publicKey = keyPair.publicKey.toString("hex");
+    const keyPairs = privateKey.map((priv) => ECPair.fromPrivateKey(Buffer.from(priv, "hex")));
+    if (!publicKey || !publicKey.length) {
+        publicKey = keyPairs.map((keyPair) => keyPair.publicKey.toString("hex"));
     }
-    //We only support  P2PKH  P2WPKH P2SH-P2WPKH P2TR address
+    const keyPair = keyPairs[0];
     let payment;
     let addressType = (0, address_1.getAddressType)(account, network, redeemScript);
     if (addressType === "p2pkh") {
@@ -99,12 +100,16 @@ const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* 
     }
     else if (addressType === "p2tr") {
         bitcoin.initEccLib(ecc);
-        payment = bitcoin.payments.p2tr({
-            internalPubkey: (0, bip371_1.toXOnly)(keyPair.publicKey),
-            network,
-        });
+        payment = bitcoin.payments.p2tr(Object.assign(Object.assign({ internalPubkey: (0, bip371_1.toXOnly)(keyPair.publicKey) }, (redeemScript
+            ? {
+                scriptTree: {
+                    output: Buffer.from(redeemScript.toString("hex"), "hex"),
+                },
+            }
+            : {})), { network }));
     }
     else if (redeemScript) {
+        //p2sh/p2wsh
         const redeemScriptBuf = Buffer.from(redeemScript.toString("hex"), "hex");
         if (addressType === "p2sh") {
             payment = bitcoin.payments.p2sh({
@@ -133,8 +138,12 @@ const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* 
     if (!payment.output) {
         throw new Error("failed to create redeem script");
     }
+    const isCommonMultiSig = redeemScript &&
+        (0, utils_1.isMultisigScript)(Buffer.from(redeemScript.toString("hex"), "hex"));
     //Re-staking
-    if (!!redeemScript && (addressType === "p2wsh" || addressType === "p2sh")) {
+    if (!!redeemScript &&
+        (addressType === "p2wsh" || addressType === "p2sh") &&
+        !isCommonMultiSig) {
         try {
             const { options, type } = (0, script_1.parseCLTVScript)({
                 cltvScript: redeemScript,
@@ -186,14 +195,29 @@ const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* 
     if (type === constant_1.RedeemScriptType.PUBLIC_KEY_HASH_SCRIPT) {
         script = script_1.CLTVScript.P2PKH({
             lockTime,
-            pubkey: publicKey,
+            pubkey: publicKey[0],
+        });
+    }
+    if (type === constant_1.RedeemScriptType.MULTI_SIG_HASH_SCRIPT &&
+        !!m &&
+        publicKey.length >= 2) {
+        //P2MS
+        const n = publicKey.length;
+        if (m > n) {
+            throw new Error("Invalid m");
+        }
+        script = script_1.CLTVScript.P2MS({
+            m,
+            pubkeys: publicKey,
+            lockTime,
+            n: publicKey.length,
         });
     }
     else {
         //P2PK
         script = script_1.CLTVScript.P2PK({
             lockTime,
-            pubkey: publicKey,
+            pubkey: publicKey[0],
         });
     }
     const lockScript = (witness ? bitcoin.payments.p2wsh : bitcoin.payments.p2sh)({
@@ -216,7 +240,8 @@ const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* 
                 rewardAddress, // 20 bytes
                 redeemScript: script.toString("hex"),
                 coreFee: 0,
-                isMultisig: false,
+                isMultisig: type === constant_1.RedeemScriptType.MULTI_SIG_HASH_SCRIPT ||
+                    type === constant_1.RedeemScriptType.MULTI_SIG_SCRIPT,
                 lockTime,
                 redeemScriptType: type,
             }),
@@ -271,7 +296,8 @@ const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* 
         ? { redeemScript: Buffer.from(input.redeemScript) }
         : {})), (input.witnessScript
         ? { witnessScript: Buffer.from(input.witnessScript) }
-        : {})), (input.isTaproot ? { tapInternalKey: payment.internalPubkey } : {})), { sequence: 0xffffffff - 1 })));
+        : {})), (input.isTaproot
+        ? Object.assign({ tapInternalKey: payment.internalPubkey }, (redeemScript ? { tapMerkleRoot: payment.hash } : {})) : {})), { sequence: 0xffffffff - 1 })));
     const changeAddress = account;
     outputs === null || outputs === void 0 ? void 0 : outputs.forEach((output) => {
         var _a;
@@ -282,13 +308,15 @@ const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* 
             ? { script: Buffer.from(output.script) }
             : { address: output.address })), { value: (_a = output.value) !== null && _a !== void 0 ? _a : 0 }));
     });
-    if (addressType.includes("p2tr")) {
-        const signer = keyPair.tweak(bitcoin.crypto.taggedHash("TapTweak", (0, bip371_1.toXOnly)(keyPair.publicKey)));
-        psbt.signAllInputs(signer);
-    }
-    else {
-        psbt.signAllInputs(keyPair);
-    }
+    keyPairs.forEach((keyPair) => {
+        if (addressType.includes("p2tr")) {
+            const signer = keyPair.tweak(bitcoin.crypto.taggedHash("TapTweak", (0, bip371_1.toXOnly)(keyPair.publicKey)));
+            psbt.signAllInputs(signer);
+        }
+        else {
+            psbt.signAllInputs(keyPair);
+        }
+    });
     if (!addressType.includes("p2tr") &&
         !psbt.validateSignaturesOfAllInputs(validatorSignature)) {
         throw new Error("signature is invalid");
