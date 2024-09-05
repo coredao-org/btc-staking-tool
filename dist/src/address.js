@@ -23,7 +23,7 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.getAddressType = void 0;
+exports.getAddressType = getAddressType;
 const bitcoin = __importStar(require("bitcoinjs-lib"));
 function getAddressType(address, network = bitcoin.networks.bitcoin, redeemScript) {
     if (address.startsWith(`${network.bech32}1p`)) {
@@ -49,4 +49,3 @@ function getAddressType(address, network = bitcoin.networks.bitcoin, redeemScrip
     }
     throw new Error("invalid address");
 }
-exports.getAddressType = getAddressType;

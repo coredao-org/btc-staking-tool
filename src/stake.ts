@@ -24,6 +24,9 @@ export const stake = async ({
   if (!lockTime) {
     throw new Error("LockTime should not be empty");
   }
+  if(lockTime.toString().length>10){
+    throw new Error("LockTime should be specified in seconds")
+  }
 
   if (new Bignumber(lockTime).lte(new Bignumber(LOCKTIME_THRESHOLD))) {
     throw new Error("lockTime should be greater than 5*1e8");
@@ -63,8 +66,9 @@ export const stake = async ({
     fee,
     redeemScript,
     type: isLockToMultiSig
-      ? RedeemScriptType.MULTI_SIG_HASH_SCRIPT
+      ? RedeemScriptType.MULTI_SIG_SCRIPT
       : RedeemScriptType.PUBLIC_KEY_HASH_SCRIPT,
+    m,
   });
   console.log(`txId: ${txId}`);
   console.log(`address: ${scriptAddress}`);

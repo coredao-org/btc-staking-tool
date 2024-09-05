@@ -23,7 +23,8 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.finalCLTVScripts = exports.buildOPReturnScript = exports.CLTVScript = exports.parseCLTVScript = exports.buildCLTVScript = exports.Script = void 0;
+exports.finalCLTVScripts = exports.buildOPReturnScript = exports.CLTVScript = exports.buildCLTVScript = exports.Script = void 0;
+exports.parseCLTVScript = parseCLTVScript;
 const bitcoin = __importStar(require("bitcoinjs-lib"));
 const constant_1 = require("./constant");
 const utils_1 = require("./utils");
@@ -117,7 +118,7 @@ function parseCLTVScript({ cltvScript, witness, }) {
             options.lockTime = bitcoin.script.number.decode(decompiled[0]);
             if (decompiled[decompiled.length - 1] === OPS.OP_CHECKMULTISIG &&
                 decompiled.length > 5) {
-                const n = +decompiled[decompiled.length - 6] - OPS.OP_RESERVED;
+                const n = +decompiled[decompiled.length - 2] - OPS.OP_RESERVED;
                 const m = +decompiled[3] - OPS.OP_RESERVED;
                 const publicKeys = decompiled.slice(4, 4 + n);
                 let isValidatePublicKey = true;
@@ -126,7 +127,7 @@ function parseCLTVScript({ cltvScript, witness, }) {
                         isValidatePublicKey = false;
                     }
                 });
-                if (m < n && isValidatePublicKey) {
+                if (m <= n && isValidatePublicKey) {
                     redeemScriptType = constant_1.RedeemScriptType.MULTI_SIG_SCRIPT;
                     options.n = n;
                     options.m = m;
@@ -155,7 +156,6 @@ function parseCLTVScript({ cltvScript, witness, }) {
         throw new Error(`Check MultisigScript: ${error}`);
     }
 }
-exports.parseCLTVScript = parseCLTVScript;
 exports.CLTVScript = {
     //LockTime OP_CHECKLOCKTIMEVERIFY OP_DROP <pubKey> OP_CHECKSIG
     P2PK: (options) => {
@@ -222,8 +222,7 @@ const finalCLTVScripts = (inputIndex, input, script, isSegwit, isP2SH, isP2WSH) 
             cltvScript: script,
             witness: isSegwit || isP2WSH,
         });
-        const isMultisig = type === constant_1.RedeemScriptType.MULTI_SIG_HASH_SCRIPT ||
-            type === constant_1.RedeemScriptType.MULTI_SIG_SCRIPT;
+        const isMultisig = type === constant_1.RedeemScriptType.MULTI_SIG_SCRIPT;
         const { m } = options;
         const sigNumber = (_b = (_a = input.partialSig) === null || _a === void 0 ? void 0 : _a.length) !== null && _b !== void 0 ? _b : 0;
         if (!input.partialSig || !input.partialSig.length) {

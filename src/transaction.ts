@@ -94,6 +94,7 @@ export const buildStakeTransaction = async ({
       : bitcoin.networks.testnet;
   let isRestaking = false;
   let preStakeOptions;
+  let preStakeType;
   const provider = new Provider({
     network,
     bitcoinRpc,
@@ -197,10 +198,11 @@ export const buildStakeTransaction = async ({
       if (
         options.lockTime > 0 &&
         type >= RedeemScriptType.PUBLIC_KEY_SCRIPT &&
-        type <= RedeemScriptType.MULTI_SIG_HASH_SCRIPT
+        type <= RedeemScriptType.MULTI_SIG_SCRIPT
       ) {
         isRestaking = true;
         preStakeOptions = options;
+        preStakeType = type;
       }
     } catch (e) {
       console.log(e);
@@ -259,7 +261,7 @@ export const buildStakeTransaction = async ({
     });
   }
   if (
-    type === RedeemScriptType.MULTI_SIG_HASH_SCRIPT &&
+    type === RedeemScriptType.MULTI_SIG_SCRIPT &&
     !!m &&
     publicKey.length >= 2
   ) {
@@ -269,7 +271,7 @@ export const buildStakeTransaction = async ({
       throw new Error("Invalid m");
     }
     script = CLTVScript.P2MS({
-      m,
+      m: Number(m),
       pubkeys: publicKey,
       lockTime,
       n: publicKey.length,
@@ -313,9 +315,7 @@ export const buildStakeTransaction = async ({
         rewardAddress, // 20 bytes
         redeemScript: script.toString("hex"),
         coreFee: 0,
-        isMultisig:
-          type === RedeemScriptType.MULTI_SIG_HASH_SCRIPT ||
-          type === RedeemScriptType.MULTI_SIG_SCRIPT,
+        isMultisig: type === RedeemScriptType.MULTI_SIG_SCRIPT,
         lockTime,
         redeemScriptType: type,
       }),
@@ -334,27 +334,32 @@ export const buildStakeTransaction = async ({
     throw new Error("failed to caculate transaction fee");
   }
 
-  if (isRestaking && preStakeOptions) {
-    let signatureSize = 0;
+  let signatureSize = 0;
+  if (isRestaking && preStakeOptions && preStakeType) {
     inputs!.forEach(() => {
       if (
-        type === RedeemScriptType.MULTI_SIG_SCRIPT &&
+        preStakeType === RedeemScriptType.MULTI_SIG_SCRIPT &&
         preStakeOptions.m &&
         preStakeOptions.m >= 1
       ) {
         signatureSize += (72 * preStakeOptions.m) / (witness ? 4 : 1);
-      } else if (type === RedeemScriptType.PUBLIC_KEY_HASH_SCRIPT) {
+      } else if (preStakeType === RedeemScriptType.PUBLIC_KEY_HASH_SCRIPT) {
         signatureSize += (72 + 66) / (witness ? 4 : 1);
-      } else if (type === RedeemScriptType.PUBLIC_KEY_SCRIPT) {
+      } else if (preStakeType === RedeemScriptType.PUBLIC_KEY_SCRIPT) {
         signatureSize += 72 / (witness ? 4 : 1);
       }
     });
-    const signatureSizeFee = new Bignumber(signatureSize)
-      .multipliedBy(new Bignumber(bytesFee))
-      .toNumber();
-
-    outputs[0].value = Math.floor(outputs[0].value! - signatureSizeFee);
+  } else if (isCommonMultiSig) {
+    inputs!.forEach(() => {
+      signatureSize += (72 * privateKey.length) / (witness ? 4 : 1);
+    });
   }
+
+  const signatureSizeFee = new Bignumber(signatureSize)
+    .multipliedBy(new Bignumber(bytesFee))
+    .toNumber();
+
+  outputs[0].value = Math.floor(outputs[0].value! - signatureSizeFee);
 
   const psbt = new bitcoin.Psbt({
     network,
@@ -449,7 +454,7 @@ export const buildStakeTransaction = async ({
 export type RedeemParams = {
   account: string; // Source address
   redeemScript: Buffer | string; // Redeem script
-  privateKey: string; // Private key
+  privateKey: string[]; // Private key
   destAddress: string; // Destination address
   bitcoinRpc: string; // Bitcoin RPC endpoint
 } & FeeParams;
@@ -498,7 +503,9 @@ export const buildRedeemTransaction = async ({
 
   const bytesFee = await provider.getFeeRate(fee);
 
-  const keyPair = ECPair.fromPrivateKey(Buffer.from(privateKey, "hex"));
+  const keyPairs = privateKey.map((priv) =>
+    ECPair.fromPrivateKey(Buffer.from(priv, "hex"))
+  );
 
   //check private key with lock script
   const res = await provider.getUTXOs(account);
@@ -627,8 +634,8 @@ export const buildRedeemTransaction = async ({
     });
   });
 
-  inputs.forEach((input, idx) => {
-    psbt.signInput(idx, keyPair);
+  keyPairs.forEach((keyPair) => {
+    psbt.signAllInputs(keyPair);
   });
 
   if (!psbt.validateSignaturesOfAllInputs(validatorSignature)) {

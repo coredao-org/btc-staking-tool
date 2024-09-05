@@ -24,10 +24,11 @@ const redeem = (_a) => __awaiter(void 0, [_a], void 0, function* ({ account, red
     if (!destAddress) {
         throw new Error("destAddress should not be empty");
     }
+    const privateKeys = privateKey.split(",").map((item) => item.trim());
     const { txId } = yield (0, transaction_1.buildRedeemTransaction)({
         account,
         redeemScript,
-        privateKey,
+        privateKey: privateKeys,
         destAddress,
         bitcoinRpc,
         fee,

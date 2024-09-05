@@ -8,7 +8,6 @@ export enum RedeemScriptType {
   PUBLIC_KEY_SCRIPT = 1,
   PUBLIC_KEY_HASH_SCRIPT,
   MULTI_SIG_SCRIPT,
-  MULTI_SIG_HASH_SCRIPT,
 }
 
 export enum RedeemType {

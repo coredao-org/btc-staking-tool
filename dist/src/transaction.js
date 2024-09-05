@@ -65,6 +65,7 @@ const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* 
         : bitcoin.networks.testnet;
     let isRestaking = false;
     let preStakeOptions;
+    let preStakeType;
     const provider = new provider_1.Provider({
         network,
         bitcoinRpc,
@@ -151,9 +152,10 @@ const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* 
             });
             if (options.lockTime > 0 &&
                 type >= constant_1.RedeemScriptType.PUBLIC_KEY_SCRIPT &&
-                type <= constant_1.RedeemScriptType.MULTI_SIG_HASH_SCRIPT) {
+                type <= constant_1.RedeemScriptType.MULTI_SIG_SCRIPT) {
                 isRestaking = true;
                 preStakeOptions = options;
+                preStakeType = type;
             }
         }
         catch (e) {
@@ -198,7 +200,7 @@ const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* 
             pubkey: publicKey[0],
         });
     }
-    if (type === constant_1.RedeemScriptType.MULTI_SIG_HASH_SCRIPT &&
+    if (type === constant_1.RedeemScriptType.MULTI_SIG_SCRIPT &&
         !!m &&
         publicKey.length >= 2) {
         //P2MS
@@ -207,7 +209,7 @@ const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* 
             throw new Error("Invalid m");
         }
         script = script_1.CLTVScript.P2MS({
-            m,
+            m: Number(m),
             pubkeys: publicKey,
             lockTime,
             n: publicKey.length,
@@ -240,8 +242,7 @@ const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* 
                 rewardAddress, // 20 bytes
                 redeemScript: script.toString("hex"),
                 coreFee: 0,
-                isMultisig: type === constant_1.RedeemScriptType.MULTI_SIG_HASH_SCRIPT ||
-                    type === constant_1.RedeemScriptType.MULTI_SIG_SCRIPT,
+                isMultisig: type === constant_1.RedeemScriptType.MULTI_SIG_SCRIPT,
                 lockTime,
                 redeemScriptType: type,
             }),
@@ -257,26 +258,31 @@ const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* 
     if (!outputs) {
         throw new Error("failed to caculate transaction fee");
     }
-    if (isRestaking && preStakeOptions) {
-        let signatureSize = 0;
+    let signatureSize = 0;
+    if (isRestaking && preStakeOptions && preStakeType) {
         inputs.forEach(() => {
-            if (type === constant_1.RedeemScriptType.MULTI_SIG_SCRIPT &&
+            if (preStakeType === constant_1.RedeemScriptType.MULTI_SIG_SCRIPT &&
                 preStakeOptions.m &&
                 preStakeOptions.m >= 1) {
                 signatureSize += (72 * preStakeOptions.m) / (witness ? 4 : 1);
             }
-            else if (type === constant_1.RedeemScriptType.PUBLIC_KEY_HASH_SCRIPT) {
+            else if (preStakeType === constant_1.RedeemScriptType.PUBLIC_KEY_HASH_SCRIPT) {
                 signatureSize += (72 + 66) / (witness ? 4 : 1);
             }
-            else if (type === constant_1.RedeemScriptType.PUBLIC_KEY_SCRIPT) {
+            else if (preStakeType === constant_1.RedeemScriptType.PUBLIC_KEY_SCRIPT) {
                 signatureSize += 72 / (witness ? 4 : 1);
             }
         });
-        const signatureSizeFee = new bignumber_js_1.default(signatureSize)
-            .multipliedBy(new bignumber_js_1.default(bytesFee))
-            .toNumber();
-        outputs[0].value = Math.floor(outputs[0].value - signatureSizeFee);
     }
+    else if (isCommonMultiSig) {
+        inputs.forEach(() => {
+            signatureSize += (72 * privateKey.length) / (witness ? 4 : 1);
+        });
+    }
+    const signatureSizeFee = new bignumber_js_1.default(signatureSize)
+        .multipliedBy(new bignumber_js_1.default(bytesFee))
+        .toNumber();
+    outputs[0].value = Math.floor(outputs[0].value - signatureSizeFee);
     const psbt = new bitcoin.Psbt({
         network,
     });
@@ -342,7 +348,7 @@ exports.buildStakeTransaction = buildStakeTransaction;
  * @param {RedeemParams} params - Redeem parameters
  * @returns {Promise<{ txId: string }>} - Transaction ID
  */
-const buildRedeemTransaction = (_b) => __awaiter(void 0, [_b], void 0, function* ({ account, redeemScript, privateKey, destAddress, bitcoinRpc, fee, }) {
+const buildRedeemTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* ({ account, redeemScript, privateKey, destAddress, bitcoinRpc, fee, }) {
     let network;
     let witness = false;
     if (account.length === 34 || account.length === 35) {
@@ -370,7 +376,7 @@ const buildRedeemTransaction = (_b) => __awaiter(void 0, [_b], void 0, function*
         bitcoinRpc,
     });
     const bytesFee = yield provider.getFeeRate(fee);
-    const keyPair = ECPair.fromPrivateKey(Buffer.from(privateKey, "hex"));
+    const keyPairs = privateKey.map((priv) => ECPair.fromPrivateKey(Buffer.from(priv, "hex")));
     //check private key with lock script
     const res = yield provider.getUTXOs(account);
     const redeemScriptBuf = Buffer.from(redeemScript.toString("hex"), "hex");
@@ -461,8 +467,8 @@ const buildRedeemTransaction = (_b) => __awaiter(void 0, [_b], void 0, function*
             ? { script: Buffer.from(output.script) }
             : { address: output.address })), { value: (_a = output.value) !== null && _a !== void 0 ? _a : 0 }));
     });
-    inputs.forEach((input, idx) => {
-        psbt.signInput(idx, keyPair);
+    keyPairs.forEach((keyPair) => {
+        psbt.signAllInputs(keyPair);
     });
     if (!psbt.validateSignaturesOfAllInputs(validatorSignature)) {
         throw new Error("signature is invalid");

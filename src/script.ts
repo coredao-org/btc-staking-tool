@@ -137,7 +137,7 @@ export function parseCLTVScript({
         decompiled[decompiled.length - 1] === OPS.OP_CHECKMULTISIG &&
         decompiled.length > 5
       ) {
-        const n = +decompiled[decompiled.length - 6] - OPS.OP_RESERVED;
+        const n = +decompiled[decompiled.length - 2] - OPS.OP_RESERVED;
         const m = +decompiled[3] - OPS.OP_RESERVED;
         const publicKeys: any[] = decompiled.slice(4, 4 + n);
         let isValidatePublicKey = true;
@@ -146,7 +146,7 @@ export function parseCLTVScript({
             isValidatePublicKey = false;
           }
         });
-        if (m < n && isValidatePublicKey) {
+        if (m <= n && isValidatePublicKey) {
           redeemScriptType = RedeemScriptType.MULTI_SIG_SCRIPT;
           options.n = n;
           options.m = m;
@@ -273,9 +273,7 @@ export const finalCLTVScripts = (
       cltvScript: script,
       witness: isSegwit || isP2WSH,
     });
-    const isMultisig =
-      type === RedeemScriptType.MULTI_SIG_HASH_SCRIPT ||
-      type === RedeemScriptType.MULTI_SIG_SCRIPT;
+    const isMultisig = type === RedeemScriptType.MULTI_SIG_SCRIPT;
     const { m } = options;
 
     const sigNumber = input.partialSig?.length ?? 0;

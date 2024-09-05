@@ -23,7 +23,8 @@ var __importStar = (this && this.__importStar) || function (mod) {
     return result;
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.isMultisigScript = exports.convertToHex = void 0;
+exports.convertToHex = convertToHex;
+exports.isMultisigScript = isMultisigScript;
 const bitcoin = __importStar(require("bitcoinjs-lib"));
 function convertToHex(str) {
     let hex = "";
@@ -32,7 +33,6 @@ function convertToHex(str) {
     }
     return hex;
 }
-exports.convertToHex = convertToHex;
 function isMultisigScript(scriptBuffer) {
     const decompiled = bitcoin.script.decompile(scriptBuffer);
     if (decompiled === null)
@@ -55,4 +55,3 @@ function isMultisigScript(scriptBuffer) {
     }
     return true;
 }
-exports.isMultisigScript = isMultisigScript;

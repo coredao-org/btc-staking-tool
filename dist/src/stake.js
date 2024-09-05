@@ -20,6 +20,9 @@ const stake = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness = fal
     if (!lockTime) {
         throw new Error("LockTime should not be empty");
     }
+    if (lockTime.toString().length > 10) {
+        throw new Error("LockTime should be specified in seconds");
+    }
     if (new bignumber_js_1.default(lockTime).lte(new bignumber_js_1.default(constant_1.LOCKTIME_THRESHOLD))) {
         throw new Error("lockTime should be greater than 5*1e8");
     }
@@ -53,8 +56,9 @@ const stake = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness = fal
         fee,
         redeemScript,
         type: isLockToMultiSig
-            ? constant_1.RedeemScriptType.MULTI_SIG_HASH_SCRIPT
+            ? constant_1.RedeemScriptType.MULTI_SIG_SCRIPT
             : constant_1.RedeemScriptType.PUBLIC_KEY_HASH_SCRIPT,
+        m,
     });
     console.log(`txId: ${txId}`);
     console.log(`address: ${scriptAddress}`);

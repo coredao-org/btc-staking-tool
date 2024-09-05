@@ -76,6 +76,7 @@ program
         bitcoinRpc: args.bitcoinrpc,
         fee: fee || args.fee,
         redeemScript: args.redeemscript,
+        m: args.m,
     });
 }));
 program
@@ -83,7 +84,7 @@ program
     .description("Redeem BTC")
     .requiredOption("-acc, --account <account>", "The locked P2SH/P2WSH script address.")
     .requiredOption("-r, --redeemscript <redeemscript>", "The redeem script which was returned in the stake action.")
-    .requiredOption("-privkey, --privatekey <privatekey>", "The private key associated --publickey in the stake action. Hex format.")
+    .requiredOption("-privkey, --privatekey <privatekey>", "The private key used to sign the transaction, which should be associated with --account, separated by commas. Hex format.")
     .requiredOption("-d, --destaddress <destaddress>", "The Bitcoin address to receive the redeemed BTC assets.")
     .option("-br, --bitcoinrpc <bitcoinrpc>", "The Bitcoin RPC service to use, default to https://mempool.space/. ")
     .option("--fee <fee>", "Transaction fee s)slow a)average f)fast, please choose in (s, a ,f) OR a customized number in SAT, default to a)average.")

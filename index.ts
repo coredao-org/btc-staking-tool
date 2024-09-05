@@ -89,6 +89,7 @@ program
       bitcoinRpc: args.bitcoinrpc,
       fee: fee || args.fee,
       redeemScript: args.redeemscript,
+      m: args.m,
     });
   });
 
@@ -105,7 +106,7 @@ program
   )
   .requiredOption(
     "-privkey, --privatekey <privatekey>",
-    "The private key associated --publickey in the stake action. Hex format."
+    "The private key used to sign the transaction, which should be associated with --account, separated by commas. Hex format."
   )
   .requiredOption(
     "-d, --destaddress <destaddress>",
