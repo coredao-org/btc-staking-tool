@@ -3,6 +3,7 @@
 import * as commander from "commander";
 import { stake } from "./src/stake";
 import { redeem } from "./src/redeem";
+import { claim } from "./src/claim";
 import { BitcoinNetworkMap, CoreNetworkMap, FeeSpeedMap } from "./src/constant";
 
 const program = new commander.Command();
@@ -122,4 +123,25 @@ program
     });
   });
 
+program
+  .command("claim")
+  .description("Claim Reward")
+  .requiredOption(
+    "-privkey, --privatekey <privatekey>",
+    "The private key associated --rewardaddress in the stake action. Hex format."
+  )
+  .option(
+    "-cn, --corenetwork <corenetwork>",
+    "The Core network to transmit the stake transaction to, choose between 1~3. 1)Mainnet 2)Devnet 3)Testnet, default to 1)Mainnet."
+  )
+  .action(async (args) => {
+    const corenetwork = CoreNetworkMap[args.corenetwork];
+
+    await claim({
+      privateKey: args.privatekey,
+      coreNetwork: corenetwork,
+    });
+  });
+
 program.parse(process.argv);
+ 

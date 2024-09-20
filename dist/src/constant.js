@@ -1,6 +1,6 @@
 "use strict";
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.FeeSpeedMap = exports.CoreNetworkMap = exports.BitcoinNetworkMap = exports.LOCKTIME_THRESHOLD = exports.CoreChainNetworks = exports.BitcoinNetworks = exports.AddressType = exports.QueryKey = exports.RedeemType = exports.RedeemScriptType = exports.CreateTxnType = void 0;
+exports.FeeSpeedMap = exports.CoreNetworkMap = exports.BitcoinNetworkMap = exports.LOCKTIME_THRESHOLD = exports.SystemContractAddress = exports.CoreChainNetworks = exports.BitcoinNetworks = exports.AddressType = exports.QueryKey = exports.RedeemType = exports.RedeemScriptType = exports.CreateTxnType = void 0;
 var CreateTxnType;
 (function (CreateTxnType) {
     CreateTxnType[CreateTxnType["CREATE_UNSIGNED_TRANSACTION_BY_WALLET"] = 0] = "CREATE_UNSIGNED_TRANSACTION_BY_WALLET";
@@ -45,17 +45,23 @@ exports.CoreChainNetworks = {
         chainId: 1116,
         label: "MAINNET",
         name: "mainnet",
+        rpc: "https://rpc-core.icecreamswap.com	",
     },
     testnet: {
         chainId: 1115,
         label: "TESTNET",
         name: "testnet",
+        rpc: "https://rpc.test.btcs.network",
     },
     devnet: {
         chainId: 1112,
         label: "DEVNET",
         name: "devnet",
+        rpc: "https://rpc.dev.btcs.network",
     },
+};
+exports.SystemContractAddress = {
+    StakeHub: "0x0000000000000000000000000000000000001010",
 };
 exports.LOCKTIME_THRESHOLD = 0x1dcd6500; // 500000000
 exports.BitcoinNetworkMap = {

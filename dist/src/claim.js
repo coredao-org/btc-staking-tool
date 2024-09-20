@@ -11,26 +11,13 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.claim = void 0;
 const transaction_1 = require("./transaction");
-const claim = (_a) => __awaiter(void 0, [_a], void 0, function* ({ account, redeemScript, privateKey, destAddress, bitcoinRpc = "mempool", fee = "avg", }) {
-    if (!account) {
-        throw new Error("account should not be empty");
-    }
-    if (!redeemScript) {
-        throw new Error("redeemScript should not be empty");
-    }
+const claim = (_a) => __awaiter(void 0, [_a], void 0, function* ({ privateKey, coreNetwork = "mainnet", }) {
     if (!privateKey) {
         throw new Error("privateKey should not be empty");
     }
-    if (!destAddress) {
-        throw new Error("destAddress should not be empty");
-    }
     const { txId } = yield (0, transaction_1.buildClaimTransaction)({
-        account,
-        redeemScript,
         privateKey,
-        destAddress,
-        bitcoinRpc,
-        fee,
+        coreNetwork,
     });
     console.log(`txId: ${txId}`);
 });

@@ -35,7 +35,7 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
     return (mod && mod.__esModule) ? mod : { "default": mod };
 };
 Object.defineProperty(exports, "__esModule", { value: true });
-exports.buildRedeemTransaction = exports.buildStakeTransaction = void 0;
+exports.buildClaimTransaction = exports.buildRedeemTransaction = exports.buildStakeTransaction = void 0;
 const constant_1 = require("./constant");
 const bitcoin = __importStar(require("bitcoinjs-lib"));
 const bip371_1 = require("bitcoinjs-lib/src/psbt/bip371");
@@ -48,6 +48,8 @@ const ecc = __importStar(require("tiny-secp256k1"));
 const ecpair_1 = __importDefault(require("ecpair"));
 const constant_2 = require("./constant");
 const address_1 = require("./address");
+const ethers_1 = require("ethers");
+const StakeHub_json_1 = __importDefault(require("./ABI/StakeHub.json"));
 // Initialize the elliptic curve library
 const ECPair = (0, ecpair_1.default)(ecc);
 // Verify validator's signature
@@ -373,3 +375,19 @@ const buildRedeemTransaction = (_b) => __awaiter(void 0, [_b], void 0, function*
     };
 });
 exports.buildRedeemTransaction = buildRedeemTransaction;
+/**
+ * Builds a claim transaction
+ * @param {ClaimParams} params - Claim parameters
+ * @returns {Promise<{ txId: string }>} - Transaction ID
+ */
+const buildClaimTransaction = (_c) => __awaiter(void 0, [_c], void 0, function* ({ privateKey, coreNetwork, }) {
+    const coreChainConfig = constant_2.CoreChainNetworks[coreNetwork];
+    const provider = new ethers_1.JsonRpcProvider(coreChainConfig.rpc);
+    const wallet = new ethers_1.Wallet(privateKey, provider);
+    const contract = new ethers_1.Contract(constant_1.SystemContractAddress.StakeHub, StakeHub_json_1.default, wallet);
+    const tx = yield contract.claimReward();
+    return {
+        txId: tx.hash,
+    };
+});
+exports.buildClaimTransaction = buildClaimTransaction;

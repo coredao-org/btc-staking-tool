@@ -36,6 +36,7 @@ Object.defineProperty(exports, "__esModule", { value: true });
 const commander = __importStar(require("commander"));
 const stake_1 = require("./src/stake");
 const redeem_1 = require("./src/redeem");
+const claim_1 = require("./src/claim");
 const constant_1 = require("./src/constant");
 const program = new commander.Command();
 program
@@ -93,6 +94,18 @@ program
         destAddress: args.destaddress,
         bitcoinRpc: args.bitcoinRpc,
         fee: fee || args.fee,
+    });
+}));
+program
+    .command("claim")
+    .description("Claim Reward")
+    .requiredOption("-privkey, --privatekey <privatekey>", "The private key associated --rewardaddress in the stake action. Hex format.")
+    .option("-cn, --corenetwork <corenetwork>", "The Core network to transmit the stake transaction to, choose between 1~3. 1)Mainnet 2)Devnet 3)Testnet, default to 1)Mainnet.")
+    .action((args) => __awaiter(void 0, void 0, void 0, function* () {
+    const corenetwork = constant_1.CoreNetworkMap[args.corenetwork];
+    yield (0, claim_1.claim)({
+        privateKey: args.privatekey,
+        coreNetwork: corenetwork,
     });
 }));
 program.parse(process.argv);

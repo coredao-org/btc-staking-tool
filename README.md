@@ -51,5 +51,7 @@ node dist/index.js redeem --account 2N7LJiG1ZGk97jUuhDcsRquPjgxFjT273fi --redeem
 ```
 
 `claim CORE rewards`
-
-Please visit https://stake.dev.btcs.network, connect to the site using the reward address (0x2a5F963BaC7bf136f6a0ff98356b52F0B49Af71A in the sample) and you can see the BTC staking transaction and claim rewards once system distributes in each round. 
+```shell
+node dist/index.js claim --corenetwork 2 --privatekey ${private key}
+```
+You can also visit https://stake.dev.btcs.network, connect to the site using the reward address (0x2a5F963BaC7bf136f6a0ff98356b52F0B49Af71A in the sample) and you can see the BTC staking transaction and claim rewards once system distributes in each round. 

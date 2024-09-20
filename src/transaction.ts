@@ -1,4 +1,4 @@
-import { RedeemScriptType } from "./constant";
+import { RedeemScriptType, SystemContractAddress } from "./constant";
 import * as bitcoin from "bitcoinjs-lib";
 import { toXOnly } from "bitcoinjs-lib/src/psbt/bip371";
 import Bignumber from "bignumber.js";
@@ -15,6 +15,8 @@ import * as ecc from "tiny-secp256k1";
 import ECPairFactory from "ecpair";
 import { CoreChainNetworks, FeeSpeedType } from "./constant";
 import { getAddressType } from "./address";
+import { JsonRpcProvider, Contract, Wallet } from "ethers";
+import StakeHubABI from "./ABI/StakeHub.json";
 
 // Initialize the elliptic curve library
 const ECPair = ECPairFactory(ecc);
@@ -510,5 +512,36 @@ export const buildRedeemTransaction = async ({
 
   return {
     txId,
+  };
+};
+
+/**
+ * Interface for claim parameters
+ */
+export type ClaimParams = {
+  privateKey: string;
+  coreNetwork: string;
+};
+
+/**
+ * Builds a claim transaction
+ * @param {ClaimParams} params - Claim parameters
+ * @returns {Promise<{ txId: string }>} - Transaction ID
+ */
+export const buildClaimTransaction = async ({
+  privateKey,
+  coreNetwork,
+}: ClaimParams) => {
+  const coreChainConfig = CoreChainNetworks[coreNetwork];
+  const provider = new JsonRpcProvider(coreChainConfig.rpc);
+  const wallet = new Wallet(privateKey, provider);
+  const contract = new Contract(
+    SystemContractAddress.StakeHub,
+    StakeHubABI,
+    wallet
+  );
+  const tx = await contract.claimReward();
+  return {
+    txId: tx.hash,
   };
 };

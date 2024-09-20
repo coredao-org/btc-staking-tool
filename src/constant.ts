@@ -49,17 +49,24 @@ export const CoreChainNetworks: Record<string, Network> = {
     chainId: 1116,
     label: "MAINNET",
     name: "mainnet",
+    rpc: "https://rpc-core.icecreamswap.com	",
   },
   testnet: {
     chainId: 1115,
     label: "TESTNET",
     name: "testnet",
+    rpc: "https://rpc.test.btcs.network",
   },
   devnet: {
     chainId: 1112,
     label: "DEVNET",
     name: "devnet",
+    rpc: "https://rpc.dev.btcs.network",
   },
+};
+
+export const SystemContractAddress = {
+  StakeHub: "0x0000000000000000000000000000000000001010",
 };
 export const LOCKTIME_THRESHOLD = 0x1dcd6500; // 500000000
 
