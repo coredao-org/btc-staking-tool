@@ -18,6 +18,7 @@ import { getAddressType } from "./address";
 
 // Initialize the elliptic curve library
 const ECPair = ECPairFactory(ecc);
+bitcoin.initEccLib(ecc);
 
 // Verify validator's signature
 const validatorSignature = (
@@ -369,7 +370,8 @@ export const buildRedeemTransaction = async ({
 
   //check private key with lock script
   const res = await provider.getUTXOs(account);
-
+  console.log("bytesFee", bytesFee);
+  console.log("utxos", res);
   const redeemScriptBuf = Buffer.from(redeemScript.toString("hex"), "hex");
 
   const script = (witness ? bitcoin.payments.p2wsh : bitcoin.payments.p2sh)({
@@ -412,7 +414,7 @@ export const buildRedeemTransaction = async ({
         }),
   }));
 
-  let { inputs, outputs } = split(
+  let { inputs, outputs, fee:finalFee } = split(
     utxos,
     [
       {
@@ -421,7 +423,8 @@ export const buildRedeemTransaction = async ({
     ],
     bytesFee
   );
-
+  console.log("fee", finalFee);
+  console.log("selecte inputs", inputs);
   if (!inputs) {
     throw new Error("insufficient balance");
   }

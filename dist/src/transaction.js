@@ -50,6 +50,7 @@ const constant_2 = require("./constant");
 const address_1 = require("./address");
 // Initialize the elliptic curve library
 const ECPair = (0, ecpair_1.default)(ecc);
+bitcoin.initEccLib(ecc);
 // Verify validator's signature
 const validatorSignature = (pubkey, msghash, signature) => ECPair.fromPublicKey(pubkey).verify(msghash, signature);
 /**
@@ -270,6 +271,8 @@ const buildRedeemTransaction = (_b) => __awaiter(void 0, [_b], void 0, function*
     const keyPair = ECPair.fromPrivateKey(Buffer.from(privateKey, "hex"));
     //check private key with lock script
     const res = yield provider.getUTXOs(account);
+    console.log("bytesFee", bytesFee);
+    console.log("utxos", res);
     const redeemScriptBuf = Buffer.from(redeemScript.toString("hex"), "hex");
     const script = (witness ? bitcoin.payments.p2wsh : bitcoin.payments.p2sh)({
         redeem: {
@@ -302,11 +305,13 @@ const buildRedeemTransaction = (_b) => __awaiter(void 0, [_b], void 0, function*
         : {
             witnessScript: redeemScriptBuf,
         }))));
-    let { inputs, outputs } = (0, split_1.default)(utxos, [
+    let { inputs, outputs, fee: finalFee } = (0, split_1.default)(utxos, [
         {
             address: destAddress,
         },
     ], bytesFee);
+    console.log("fee", finalFee);
+    console.log("selecte inputs", inputs);
     if (!inputs) {
         throw new Error("insufficient balance");
     }
