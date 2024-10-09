@@ -272,7 +272,7 @@ const buildRedeemTransaction = (_b) => __awaiter(void 0, [_b], void 0, function*
     //check private key with lock script
     const res = yield provider.getUTXOs(account);
     console.log("bytesFee", bytesFee);
-    console.log("utxos", res);
+    console.log("utxos length", res.length);
     const redeemScriptBuf = Buffer.from(redeemScript.toString("hex"), "hex");
     const script = (witness ? bitcoin.payments.p2wsh : bitcoin.payments.p2sh)({
         redeem: {
@@ -305,13 +305,12 @@ const buildRedeemTransaction = (_b) => __awaiter(void 0, [_b], void 0, function*
         : {
             witnessScript: redeemScriptBuf,
         }))));
-    let { inputs, outputs, fee: finalFee } = (0, split_1.default)(utxos, [
+    let { inputs, outputs, fee: finalFee, } = (0, split_1.default)(utxos, [
         {
             address: destAddress,
         },
     ], bytesFee);
     console.log("fee", finalFee);
-    console.log("selecte inputs", inputs);
     if (!inputs) {
         throw new Error("insufficient balance");
     }
@@ -363,6 +362,7 @@ const buildRedeemTransaction = (_b) => __awaiter(void 0, [_b], void 0, function*
             ? { script: Buffer.from(output.script) }
             : { address: output.address })), { value: (_a = output.value) !== null && _a !== void 0 ? _a : 0 }));
     });
+    console.log(psbt.getInputType(0));
     inputs.forEach((input, idx) => {
         psbt.signInput(idx, keyPair);
     });
