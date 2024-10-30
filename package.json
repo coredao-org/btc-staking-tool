@@ -10,29 +10,26 @@
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon --exec 'tsc && node dist/index.js' --ext ts",
     "build": "tsc",
-    "package": "pkg ./package.json --output ./build/core-stake",
     "postinstall": "patch-package"
   },
   "keywords": [],
   "author": "",
   "license": "ISC",
   "devDependencies": {
-    "@types/node": "^20.11.26",
-    "commander": "^12.0.0",
-    "typescript": "^5.4.2"
+    "@types/node": "20.11.26",
+    "commander": "12.0.0",
+    "typescript": "5.4.2"
   },
   "dependencies": {
-    "@mempool/mempool.js": "^2.3.0",
+    "@mempool/mempool.js": "2.3.0",
     "axios": "0.27.2",
-    "bignumber.js": "^9.1.2",
-    "bitcoinjs-lib": "^6.1.5",
-    "coinselect": "^3.1.13",
-    "coinselect-segwit": "^1.0.2",
-    "dotenv": "^16.4.5",
-    "ecpair": "^2.1.0",
-    "patch-package": "^8.0.0",
-    "pkg": "^5.8.1",
-    "regtest-client": "^0.2.1",
-    "tiny-secp256k1": "^2.2.3"
+    "bignumber.js": "9.1.2",
+    "bitcoinjs-lib": "6.1.5",
+    "coinselect": "3.1.13",
+    "coinselect-segwit": "1.0.2",
+    "ecpair": "2.1.0",
+    "patch-package": "8.0.0",
+    "regtest-client": "0.2.1",
+    "tiny-secp256k1": "2.2.3"
   }
 }
