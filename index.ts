@@ -30,11 +30,11 @@ program
 
   .option(
     "-bn, --bitcoinnetwork <bitcoinnetwork>",
-    "The Bitcoin network to operate on, choose between 1~2. 1)Mainnet 2)Testnet 3)Testnet4, default to 1)Mainnet."
+    "The Bitcoin network to operate on, choose between 1~3. 1)Mainnet 2)Testnet 3)Testnet4, default to 1)Mainnet."
   )
   .option(
     "-cn, --corenetwork <corenetwork>",
-    "The Core network to transmit the stake transaction to, choose between 1~3. 1)Mainnet 2)Devnet 3)Testnet 4)Testnet2, default to 1)Mainnet."
+    "The Core network to transmit the stake transaction to, choose between 1~4. 1)Mainnet 2)Devnet 3)Testnet 4)Testnet2, default to 1)Mainnet."
   )
   .requiredOption(
     "-lt, --locktime <locktime>",
@@ -107,7 +107,7 @@ program
   )
   .option(
     "-bn, --bitcoinnetwork <bitcoinnetwork>",
-    "The Bitcoin network to operate on, choose between 1~2. 1)Mainnet 2)Testnet 3)Testnet4, default to 1)Mainnet."
+    "The Bitcoin network to operate on, choose between 1~3. 1)Mainnet 2)Testnet 3)Testnet4, default to 1)Mainnet."
   )
   .option(
     "--fee <fee>",
