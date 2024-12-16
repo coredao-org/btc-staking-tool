@@ -107,7 +107,7 @@ program
   )
   .option(
     "-bn, --bitcoinnetwork <bitcoinnetwork>",
-    "The Bitcoin network to operate on, choose between 1~3. 1)Mainnet 2)Testnet 3)Testnet4, default to 1)Mainnet."
+    "The Bitcoin network to operate on, choose between 1~3. 1)Mainnet 2)Testnet 3)Testnet4, default to 1)Mainnet. It should align with the account."
   )
   .option(
     "--fee <fee>",

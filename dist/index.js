@@ -83,7 +83,7 @@ program
     .requiredOption("-privkey, --privatekey <privatekey>", "The private key associated --publickey in the stake action. Hex format.")
     .requiredOption("-d, --destaddress <destaddress>", "The Bitcoin address to receive the redeemed BTC assets.")
     .option("-br, --bitcoinrpc <bitcoinrpc>", "The Bitcoin RPC service to use, default to https://mempool.space/. ")
-    .option("-bn, --bitcoinnetwork <bitcoinnetwork>", "The Bitcoin network to operate on, choose between 1~3. 1)Mainnet 2)Testnet 3)Testnet4, default to 1)Mainnet.")
+    .option("-bn, --bitcoinnetwork <bitcoinnetwork>", "The Bitcoin network to operate on, choose between 1~3. 1)Mainnet 2)Testnet 3)Testnet4, default to 1)Mainnet. It should align with the account.")
     .option("--fee <fee>", "Transaction fee s)slow a)average f)fast, please choose in (s, a ,f) OR a customized number in SAT, default to a)average.")
     .action((args) => __awaiter(void 0, void 0, void 0, function* () {
     const fee = constant_1.FeeSpeedMap[args.fee];

@@ -47,7 +47,7 @@ redeemScript: 04e1fa1766b17576a91413597ff6de21ec27b297e296ef03b9897459086b88ac
 
 `redeem BTC`
 ```shell
-node dist/index.js redeem --account 2N7LJiG1ZGk97jUuhDcsRquPjgxFjT273fi --redeemscript 04e1fa1766b17576a91413597ff6de21ec27b297e296ef03b9897459086b88ac --privatekey ${private key} --destaddress tb1qzdvhlak7y8kz0v5hu2tw7qae3969jzrt7rj7n5
+node dist/index.js redeem --account 2N7LJiG1ZGk97jUuhDcsRquPjgxFjT273fi --redeemscript 04e1fa1766b17576a91413597ff6de21ec27b297e296ef03b9897459086b88ac --privatekey ${private key} --destaddress tb1qzdvhlak7y8kz0v5hu2tw7qae3969jzrt7rj7n5  --bitcoinnetwork 2
 ```
 
 `claim CORE rewards`
