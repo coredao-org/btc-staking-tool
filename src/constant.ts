@@ -66,6 +66,11 @@ export const CoreChainNetworks: Record<string, Network> = {
     label: "DEVNET",
     name: "devnet",
   },
+  devnet2: {
+    chainId: 1111,
+    label: "DEVNET2",
+    name: "devnet2",
+  },
 };
 export const LOCKTIME_THRESHOLD = 0x1dcd6500; // 500000000
 
@@ -74,14 +79,15 @@ export type FeeSpeedType = "slow" | "avg" | "fast";
 export const BitcoinNetworkMap: Record<number, string> = {
   1: "mainnet",
   2: "testnet",
-  3: "testnet4"
+  3: "testnet4",
 };
 
 export const CoreNetworkMap: Record<number, string> = {
   1: "mainnet",
   2: "devnet",
   3: "testnet",
-  4: "testnet2"
+  4: "testnet2",
+  5: "devnet2",
 };
 
 export const FeeSpeedMap: Record<string, string> = {

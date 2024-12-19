@@ -62,18 +62,24 @@ exports.CoreChainNetworks = {
         label: "DEVNET",
         name: "devnet",
     },
+    devnet2: {
+        chainId: 1111,
+        label: "DEVNET2",
+        name: "devnet2",
+    },
 };
 exports.LOCKTIME_THRESHOLD = 0x1dcd6500; // 500000000
 exports.BitcoinNetworkMap = {
     1: "mainnet",
     2: "testnet",
-    3: "testnet4"
+    3: "testnet4",
 };
 exports.CoreNetworkMap = {
     1: "mainnet",
     2: "devnet",
     3: "testnet",
-    4: "testnet2"
+    4: "testnet2",
+    5: "devnet2",
 };
 exports.FeeSpeedMap = {
     s: "slow",
