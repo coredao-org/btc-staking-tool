@@ -15,9 +15,17 @@ export const stake = async ({
   bitcoinNetwork = "mainnet",
   bitcoinRpc = "mempool",
   fee = "avg",
-}: Omit<StakeParams, "chainId" | "type">) => {
+  redeemScript,
+  m,
+}: Omit<StakeParams, "chainId" | "type" | "privateKey" | "publicKey"> & {
+  privateKey: string;
+  publicKey?: string;
+}) => {
   if (!lockTime) {
     throw new Error("LockTime should not be empty");
+  }
+  if(lockTime.toString().length>10){
+    throw new Error("LockTime should be specified in seconds")
   }
 
   if (new Bignumber(lockTime).lte(new Bignumber(LOCKTIME_THRESHOLD))) {
@@ -32,10 +40,6 @@ export const stake = async ({
     throw new Error("privateKey should not be empty");
   }
 
-  if (!amount) {
-    throw new Error("Amount should not be empty");
-  }
-
   if (!validatorAddress) {
     throw new Error("validatorAddress should not be empty");
   }
@@ -43,23 +47,30 @@ export const stake = async ({
   if (!rewardAddress) {
     throw new Error("rewardAddress should not be empty");
   }
+  const publicKeys = publicKey?.split(",").map((item: string) => item.trim());
+  const privateKeys = privateKey.split(",").map((item: string) => item.trim());
+  const isLockToMultiSig = publicKeys && publicKeys?.length >= 2 && !!m;
 
-  const { txId, scriptAddress, redeemScript } = await buildStakeTransaction({
+  const { txId, scriptAddress, script } = await buildStakeTransaction({
     witness,
     lockTime: Number(lockTime),
     account,
     amount,
     validatorAddress,
     rewardAddress,
-    type: RedeemScriptType.PUBLIC_KEY_HASH_SCRIPT,
-    publicKey,
-    privateKey,
+    publicKey: publicKeys,
+    privateKey: privateKeys,
     bitcoinNetwork,
     coreNetwork,
     bitcoinRpc,
     fee,
+    redeemScript,
+    type: isLockToMultiSig
+      ? RedeemScriptType.MULTI_SIG_SCRIPT
+      : RedeemScriptType.PUBLIC_KEY_HASH_SCRIPT,
+    m,
   });
   console.log(`txId: ${txId}`);
   console.log(`address: ${scriptAddress}`);
-  console.log(`redeemScript: ${redeemScript}`);
+  console.log(`redeemScript: ${script}`);
 };

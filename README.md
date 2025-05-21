@@ -33,7 +33,7 @@ If you want to use the tool directly, please run `npm install` and scripts below
 node dist/index.js stake --account tb1qzdvhlak7y8kz0v5hu2tw7qae3969jzrt7rj7n5 --privatekey ${private key} --amount 1000000 --bitcoinnetwork 2 --corenetwork 2 --locktime 1712847585 --rewardaddress 0x2a5F963BaC7bf136f6a0ff98356b52F0B49Af71A --validatoraddress  0x3aE030Dc3717C66f63D6e8f1d1508a5C941ff46D
 ```
 
-If successful, you will see the console returns transaction id, the locked P2SH/P2WSH script address and the redeem script, which will be used on the following redeem transaction. Please save them properly. 
+If successful, you will see the console returns transaction id, the locked P2SH/P2WSH/P2MS script address and the redeem script, which will be used on the following redeem transaction. Please save them properly. 
 
 Example
 

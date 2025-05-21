@@ -12,7 +12,6 @@ var RedeemScriptType;
     RedeemScriptType[RedeemScriptType["PUBLIC_KEY_SCRIPT"] = 1] = "PUBLIC_KEY_SCRIPT";
     RedeemScriptType[RedeemScriptType["PUBLIC_KEY_HASH_SCRIPT"] = 2] = "PUBLIC_KEY_HASH_SCRIPT";
     RedeemScriptType[RedeemScriptType["MULTI_SIG_SCRIPT"] = 3] = "MULTI_SIG_SCRIPT";
-    RedeemScriptType[RedeemScriptType["MULTI_SIG_HASH_SCRIPT"] = 4] = "MULTI_SIG_HASH_SCRIPT";
 })(RedeemScriptType || (exports.RedeemScriptType = RedeemScriptType = {}));
 var RedeemType;
 (function (RedeemType) {

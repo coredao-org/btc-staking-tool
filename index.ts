@@ -21,17 +21,18 @@ program
   )
   .requiredOption(
     "-privkey, --privatekey <privatekey>",
-    "The private key used to sign the transaction, which should be associated with --account. Hex format."
+    "The private key used to sign the transaction, which should be associated with --account, separated by commas. Hex format."
   )
-  .requiredOption(
+  .option(
     "-amt, --amount <amount>",
-    "Amount of BTC to stake, measured in SAT."
+    "Amount of BTC to stake, measured in SAT, default to all amount of BTC"
   )
 
   .option(
     "-bn, --bitcoinnetwork <bitcoinnetwork>",
     "The Bitcoin network to operate on, choose between 1~3. 1)Mainnet 2)Testnet 3)Testnet4, default to 1)Mainnet."
   )
+
   .option(
     "-cn, --corenetwork <corenetwork>",
     "The Core network to transmit the stake transaction to, choose between 1~4. 1)Mainnet 2)Devnet 3)Testnet 4)Testnet2, default to 1)Mainnet."
@@ -42,7 +43,11 @@ program
   )
   .option(
     "-pubkey, --publickey <publickey>",
-    "The public key used to redeem the BTC assets when locktime expires. Default to the public key associated with --privatekey."
+    "The public key used to redeem the BTC assets when locktime expires. Default to the public key associated with --privatekey, separated by commas"
+  )
+  .option(
+    "-m, --m <m>",
+    "The minimum number of signatures required to authorize a transaction from the set of public keys."
   )
   .requiredOption(
     "-raddr, --rewardaddress <rewardaddress>",
@@ -59,7 +64,11 @@ program
   )
   .option(
     "--fee <fee>",
-    "Transaction fee s)slow a)average f)fast, please choose in (s, a ,f) OR a customized number in SAT, default to a)average."
+    "Transaction fee in every bytes s)slow a)average f)fast, please choose in (s, a ,f) OR a customized number in SAT, default to a)average."
+  )
+  .option(
+    "-r, --redeemscript <redeemscript>",
+    "The redeem script which was returned in the stake action or was the redeem script of multi signature address."
   )
   .action(async (args) => {
     const bitcoinnetwork = BitcoinNetworkMap[args.bitcoinnetwork];
@@ -79,6 +88,8 @@ program
       witness: args.witness,
       bitcoinRpc: args.bitcoinrpc,
       fee: fee || args.fee,
+      redeemScript: args.redeemscript,
+      m: args.m,
     });
   });
 
@@ -95,7 +106,7 @@ program
   )
   .requiredOption(
     "-privkey, --privatekey <privatekey>",
-    "The private key associated --publickey in the stake action. Hex format."
+    "The private key used to sign the transaction, which should be associated with --account, separated by commas. Hex format."
   )
   .requiredOption(
     "-d, --destaddress <destaddress>",

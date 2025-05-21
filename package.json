@@ -7,6 +7,7 @@
     "btcfi": "./dist/index.js"
   },
   "scripts": {
+    "debug": "ts-node ./index.ts",
     "test": "echo \"Error: no test specified\" && exit 1",
     "dev": "nodemon --exec 'tsc && node dist/index.js' --ext ts",
     "build": "tsc",

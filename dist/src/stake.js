@@ -16,9 +16,12 @@ exports.stake = void 0;
 const constant_1 = require("./constant");
 const transaction_1 = require("./transaction");
 const bignumber_js_1 = __importDefault(require("bignumber.js"));
-const stake = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness = false, lockTime, account, amount, validatorAddress, rewardAddress, privateKey, publicKey, coreNetwork = "mainnet", bitcoinNetwork = "mainnet", bitcoinRpc = "mempool", fee = "avg", }) {
+const stake = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness = false, lockTime, account, amount, validatorAddress, rewardAddress, privateKey, publicKey, coreNetwork = "mainnet", bitcoinNetwork = "mainnet", bitcoinRpc = "mempool", fee = "avg", redeemScript, m, }) {
     if (!lockTime) {
         throw new Error("LockTime should not be empty");
+    }
+    if (lockTime.toString().length > 10) {
+        throw new Error("LockTime should be specified in seconds");
     }
     if (new bignumber_js_1.default(lockTime).lte(new bignumber_js_1.default(constant_1.LOCKTIME_THRESHOLD))) {
         throw new Error("lockTime should be greater than 5*1e8");
@@ -29,32 +32,36 @@ const stake = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness = fal
     if (!privateKey) {
         throw new Error("privateKey should not be empty");
     }
-    if (!amount) {
-        throw new Error("Amount should not be empty");
-    }
     if (!validatorAddress) {
         throw new Error("validatorAddress should not be empty");
     }
     if (!rewardAddress) {
         throw new Error("rewardAddress should not be empty");
     }
-    const { txId, scriptAddress, redeemScript } = yield (0, transaction_1.buildStakeTransaction)({
+    const publicKeys = publicKey === null || publicKey === void 0 ? void 0 : publicKey.split(",").map((item) => item.trim());
+    const privateKeys = privateKey.split(",").map((item) => item.trim());
+    const isLockToMultiSig = publicKeys && (publicKeys === null || publicKeys === void 0 ? void 0 : publicKeys.length) >= 2 && !!m;
+    const { txId, scriptAddress, script } = yield (0, transaction_1.buildStakeTransaction)({
         witness,
         lockTime: Number(lockTime),
         account,
         amount,
         validatorAddress,
         rewardAddress,
-        type: constant_1.RedeemScriptType.PUBLIC_KEY_HASH_SCRIPT,
-        publicKey,
-        privateKey,
+        publicKey: publicKeys,
+        privateKey: privateKeys,
         bitcoinNetwork,
         coreNetwork,
         bitcoinRpc,
         fee,
+        redeemScript,
+        type: isLockToMultiSig
+            ? constant_1.RedeemScriptType.MULTI_SIG_SCRIPT
+            : constant_1.RedeemScriptType.PUBLIC_KEY_HASH_SCRIPT,
+        m,
     });
     console.log(`txId: ${txId}`);
     console.log(`address: ${scriptAddress}`);
-    console.log(`redeemScript: ${redeemScript}`);
+    console.log(`redeemScript: ${script}`);
 });
 exports.stake = stake;
