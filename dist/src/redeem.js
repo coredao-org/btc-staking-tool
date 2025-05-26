@@ -11,7 +11,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.redeem = void 0;
 const transaction_1 = require("./transaction");
-const redeem = (_a) => __awaiter(void 0, [_a], void 0, function* ({ account, redeemScript, privateKey, destAddress, bitcoinRpc = "mempool", fee = "avg", }) {
+const redeem = (_a) => __awaiter(void 0, [_a], void 0, function* ({ account, redeemScript, privateKey, destAddress, bitcoinRpc = "mempool", bitcoinNetwork = "mainnet", fee = "avg", }) {
     if (!account) {
         throw new Error("account should not be empty");
     }
@@ -24,13 +24,15 @@ const redeem = (_a) => __awaiter(void 0, [_a], void 0, function* ({ account, red
     if (!destAddress) {
         throw new Error("destAddress should not be empty");
     }
+    const privateKeys = privateKey.split(",").map((item) => item.trim());
     const { txId } = yield (0, transaction_1.buildRedeemTransaction)({
         account,
         redeemScript,
-        privateKey,
+        privateKey: privateKeys,
         destAddress,
         bitcoinRpc,
         fee,
+        bitcoinNetwork,
     });
     console.log(`txId: ${txId}`);
 });

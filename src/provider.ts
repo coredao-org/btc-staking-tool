@@ -18,8 +18,9 @@ export interface Transaction {
   fee: number;
 }
 
-export const MempoolRpcUrl = {
+export const MempoolRpcUrl: Record<string, string> = {
   testnet: "https://mempool.space/testnet/api",
+  testnet4: "https://mempool.space/testnet4/api",
   mainnet: "https://mempool.space/api",
 };
 
@@ -30,22 +31,16 @@ export class Provider {
     network,
     bitcoinRpc,
   }: {
-    network: bitcoin.Network;
+    network: string;
     bitcoinRpc: string;
   }) {
     if (bitcoinRpc === "mempool") {
-      this.apiUrl =
-        network === bitcoin.networks.testnet
-          ? MempoolRpcUrl["testnet"]
-          : MempoolRpcUrl["mainnet"];
+      this.apiUrl = MempoolRpcUrl[network];
     } else {
       this.apiUrl = bitcoinRpc;
     }
 
-    this.feeApiUrl =
-      network === bitcoin.networks.testnet
-        ? MempoolRpcUrl["testnet"]
-        : MempoolRpcUrl["mainnet"];
+    this.feeApiUrl = MempoolRpcUrl[network];
   }
 
   async getFeeRate(feeRate?: FeeSpeedType | string): Promise<number> {

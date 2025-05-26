@@ -6,8 +6,11 @@ export const redeem = async ({
   privateKey,
   destAddress,
   bitcoinRpc = "mempool",
+  bitcoinNetwork = "mainnet",
   fee = "avg",
-}: RedeemParams) => {
+}: Omit<RedeemParams, "privateKey"> & {
+  privateKey: string;
+}) => {
   if (!account) {
     throw new Error("account should not be empty");
   }
@@ -23,14 +26,16 @@ export const redeem = async ({
   if (!destAddress) {
     throw new Error("destAddress should not be empty");
   }
+  const privateKeys = privateKey.split(",").map((item: string) => item.trim());
 
   const { txId } = await buildRedeemTransaction({
     account,
     redeemScript,
-    privateKey,
+    privateKey: privateKeys,
     destAddress,
     bitcoinRpc,
     fee,
+    bitcoinNetwork,
   });
   console.log(`txId: ${txId}`);
 };

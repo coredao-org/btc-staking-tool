@@ -117,7 +117,7 @@ function parseCLTVScript({ cltvScript, witness, }) {
             options.lockTime = bitcoin.script.number.decode(decompiled[0]);
             if (decompiled[decompiled.length - 1] === OPS.OP_CHECKMULTISIG &&
                 decompiled.length > 5) {
-                const n = +decompiled[decompiled.length - 6] - OPS.OP_RESERVED;
+                const n = +decompiled[decompiled.length - 2] - OPS.OP_RESERVED;
                 const m = +decompiled[3] - OPS.OP_RESERVED;
                 const publicKeys = decompiled.slice(4, 4 + n);
                 let isValidatePublicKey = true;
@@ -126,7 +126,7 @@ function parseCLTVScript({ cltvScript, witness, }) {
                         isValidatePublicKey = false;
                     }
                 });
-                if (m < n && isValidatePublicKey) {
+                if (m <= n && isValidatePublicKey) {
                     redeemScriptType = constant_1.RedeemScriptType.MULTI_SIG_SCRIPT;
                     options.n = n;
                     options.m = m;
@@ -222,8 +222,7 @@ const finalCLTVScripts = (inputIndex, input, script, isSegwit, isP2SH, isP2WSH) 
             cltvScript: script,
             witness: isSegwit || isP2WSH,
         });
-        const isMultisig = type === constant_1.RedeemScriptType.MULTI_SIG_HASH_SCRIPT ||
-            type === constant_1.RedeemScriptType.MULTI_SIG_SCRIPT;
+        const isMultisig = type === constant_1.RedeemScriptType.MULTI_SIG_SCRIPT;
         const { m } = options;
         const sigNumber = (_b = (_a = input.partialSig) === null || _a === void 0 ? void 0 : _a.length) !== null && _b !== void 0 ? _b : 0;
         if (!input.partialSig || !input.partialSig.length) {
