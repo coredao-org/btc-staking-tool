@@ -2,7 +2,7 @@
 
 This repository contains TypeScript/JavaScript samples to compose the `stake` and `redeem` transactions on Bitcoin network. The targeted readers should have knowledge on Bitcoin transaction formats and are familiar with TS/JS programming languages. 
 
-Quick link to technical design (draft version): https://famous-exoplanet-701.notion.site/BTC-Staking-Transaction-Design-v2-bfa311f7f19e45688a944fb9c1e32c59. 
+Quick link to technical design: https://docs.coredao.org/docs/stake-and-delegate/btc-staking/design. 
 
 For those who want a more user friendly interface, please test it out on https://stake.dev.btcs.network.
 
