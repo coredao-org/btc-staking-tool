@@ -44,6 +44,13 @@ export const stake = async ({
     throw new Error("rewardAddress should not be empty");
   }
 
+  if (
+    (bitcoinNetwork == "mainnet" && coreNetwork !== "mainnet") ||
+    (coreNetwork == "mainnet" && bitcoinNetwork !== "mainnet")
+  ) {
+    throw new Error("Network mismatch");
+  }
+
   const { txId, scriptAddress, redeemScript } = await buildStakeTransaction({
     witness,
     lockTime: Number(lockTime),

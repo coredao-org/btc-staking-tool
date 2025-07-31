@@ -34,6 +34,7 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const commander = __importStar(require("commander"));
+const prompts_1 = require("@inquirer/prompts");
 const stake_1 = require("./src/stake");
 const redeem_1 = require("./src/redeem");
 const constant_1 = require("./src/constant");
@@ -45,7 +46,6 @@ program
     .command("stake")
     .description("Stake BTC")
     .requiredOption("-acc, --account <account>", "The Bitcon address used to stake.")
-    .requiredOption("-privkey, --privatekey <privatekey>", "The private key used to sign the transaction, which should be associated with --account. Hex format.")
     .requiredOption("-amt, --amount <amount>", "Amount of BTC to stake, measured in SAT.")
     .option("-bn, --bitcoinnetwork <bitcoinnetwork>", "The Bitcoin network to operate on, choose between 1~2. 1)Mainnet 2)Testnet, default to 1)Mainnet.")
     .option("-cn, --corenetwork <corenetwork>", "The Core network to transmit the stake transaction to, choose between 1~3. 1)Mainnet 2)Devnet 3)Testnet, default to 1)Mainnet.")
@@ -60,6 +60,17 @@ program
     const bitcoinnetwork = constant_1.BitcoinNetworkMap[args.bitcoinnetwork];
     const corenetwork = constant_1.CoreNetworkMap[args.corenetwork];
     const fee = constant_1.FeeSpeedMap[args.fee];
+    const answer = yield (0, prompts_1.input)({
+        message: "Enter your private key (The private key is used to sign the transaction, which should be associated with --account. Hex format, separated by commas.):",
+        required: true,
+        validate: (input) => input ? true : "Private key cannot be empty",
+    });
+    const privateKey = answer
+        .replace(/(\r\n|\n|\r)/gm, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .split(" ")
+        .join("");
     yield (0, stake_1.stake)({
         lockTime: args.locktime,
         amount: args.amount,
@@ -69,7 +80,7 @@ program
         account: args.account,
         bitcoinNetwork: bitcoinnetwork,
         coreNetwork: corenetwork,
-        privateKey: args.privatekey,
+        privateKey: privateKey,
         witness: args.witness,
         bitcoinRpc: args.bitcoinrpc,
         fee: fee || args.fee,
@@ -80,16 +91,26 @@ program
     .description("Redeem BTC")
     .requiredOption("-acc, --account <account>", "The locked P2SH/P2WSH script address.")
     .requiredOption("-r, --redeemscript <redeemscript>", "The redeem script which was returned in the stake action.")
-    .requiredOption("-privkey, --privatekey <privatekey>", "The private key associated --publickey in the stake action. Hex format.")
     .requiredOption("-d, --destaddress <destaddress>", "The Bitcoin address to receive the redeemed BTC assets.")
     .option("-br, --bitcoinrpc <bitcoinrpc>", "The Bitcoin RPC service to use, default to https://mempool.space/. ")
     .option("--fee <fee>", "Transaction fee s)slow a)average f)fast, please choose in (s, a ,f) OR a customized number in SAT, default to a)average.")
     .action((args) => __awaiter(void 0, void 0, void 0, function* () {
     const fee = constant_1.FeeSpeedMap[args.fee];
+    const answer = yield (0, prompts_1.input)({
+        message: "Enter your private key (The private key associated --publickey in the stake action. Hex format.):",
+        required: true,
+        validate: (input) => input ? true : "Private key cannot be empty",
+    });
+    const privateKey = answer
+        .replace(/(\r\n|\n|\r)/gm, " ")
+        .replace(/\s+/g, " ")
+        .trim()
+        .split(" ")
+        .join("");
     yield (0, redeem_1.redeem)({
         account: args.account,
         redeemScript: args.redeemscript,
-        privateKey: args.privatekey,
+        privateKey: privateKey,
         destAddress: args.destaddress,
         bitcoinRpc: args.bitcoinRpc,
         fee: fee || args.fee,

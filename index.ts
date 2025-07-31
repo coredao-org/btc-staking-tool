@@ -1,6 +1,7 @@
 #!/usr/bin/env node
 
 import * as commander from "commander";
+import { input } from "@inquirer/prompts";
 import { stake } from "./src/stake";
 import { redeem } from "./src/redeem";
 import { BitcoinNetworkMap, CoreNetworkMap, FeeSpeedMap } from "./src/constant";
@@ -18,10 +19,6 @@ program
   .requiredOption(
     "-acc, --account <account>",
     "The Bitcon address used to stake."
-  )
-  .requiredOption(
-    "-privkey, --privatekey <privatekey>",
-    "The private key used to sign the transaction, which should be associated with --account. Hex format."
   )
   .requiredOption(
     "-amt, --amount <amount>",
@@ -66,6 +63,20 @@ program
     const corenetwork = CoreNetworkMap[args.corenetwork];
     const fee = FeeSpeedMap[args.fee];
 
+    const answer = await input({
+      message:
+        "Enter your private key (The private key is used to sign the transaction, which should be associated with --account. Hex format, separated by commas.):",
+      required: true,
+      validate: (input: string) =>
+        input ? true : "Private key cannot be empty",
+    });
+    const privateKey = answer
+      .replace(/(\r\n|\n|\r)/gm, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .split(" ")
+      .join("");
+
     await stake({
       lockTime: args.locktime,
       amount: args.amount,
@@ -75,7 +86,7 @@ program
       account: args.account,
       bitcoinNetwork: bitcoinnetwork,
       coreNetwork: corenetwork,
-      privateKey: args.privatekey,
+      privateKey: privateKey,
       witness: args.witness,
       bitcoinRpc: args.bitcoinrpc,
       fee: fee || args.fee,
@@ -94,10 +105,6 @@ program
     "The redeem script which was returned in the stake action."
   )
   .requiredOption(
-    "-privkey, --privatekey <privatekey>",
-    "The private key associated --publickey in the stake action. Hex format."
-  )
-  .requiredOption(
     "-d, --destaddress <destaddress>",
     "The Bitcoin address to receive the redeemed BTC assets."
   )
@@ -112,10 +119,24 @@ program
   .action(async (args) => {
     const fee = FeeSpeedMap[args.fee];
 
+    const answer = await input({
+      message:
+        "Enter your private key (The private key associated --publickey in the stake action. Hex format.):",
+      required: true,
+      validate: (input: string) =>
+        input ? true : "Private key cannot be empty",
+    });
+    const privateKey = answer
+      .replace(/(\r\n|\n|\r)/gm, " ")
+      .replace(/\s+/g, " ")
+      .trim()
+      .split(" ")
+      .join("");
+
     await redeem({
       account: args.account,
       redeemScript: args.redeemscript,
-      privateKey: args.privatekey,
+      privateKey: privateKey,
       destAddress: args.destaddress,
       bitcoinRpc: args.bitcoinRpc,
       fee: fee || args.fee,

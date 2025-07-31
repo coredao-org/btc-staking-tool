@@ -38,6 +38,10 @@ const stake = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness = fal
     if (!rewardAddress) {
         throw new Error("rewardAddress should not be empty");
     }
+    if ((bitcoinNetwork == "mainnet" && coreNetwork !== "mainnet") ||
+        (coreNetwork == "mainnet" && bitcoinNetwork !== "mainnet")) {
+        throw new Error("Network mismatch");
+    }
     const { txId, scriptAddress, redeemScript } = yield (0, transaction_1.buildStakeTransaction)({
         witness,
         lockTime: Number(lockTime),

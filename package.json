@@ -18,17 +18,21 @@
   "devDependencies": {
     "@types/node": "20.11.26",
     "commander": "12.0.0",
+    "patch-package": "8.0.0",
     "typescript": "5.4.2"
   },
   "dependencies": {
-    "axios": "0.28.0",
+    "@inquirer/prompts": "7.1.0",
+    "axios": "1.7.7",
     "bignumber.js": "9.1.2",
     "bitcoinjs-lib": "6.1.5",
     "coinselect": "3.1.13",
     "coinselect-segwit": "1.0.2",
     "ecpair": "2.1.0",
-    "patch-package": "8.0.0",
     "regtest-client": "0.2.1",
     "tiny-secp256k1": "2.2.3"
+  },
+  "resolutions": {
+    "cross-spawn": "7.0.6"
   }
 }
