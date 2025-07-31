@@ -30,11 +30,11 @@ program
 
   .option(
     "-bn, --bitcoinnetwork <bitcoinnetwork>",
-    "The Bitcoin network to operate on, choose between 1~2. 1)Mainnet 2)Testnet, default to 1)Mainnet."
+    "The Bitcoin network to operate on, choose between 1~3. 1)Mainnet 2)Testnet 3)Testnet4, default to 1)Mainnet."
   )
   .option(
     "-cn, --corenetwork <corenetwork>",
-    "The Core network to transmit the stake transaction to, choose between 1~3. 1)Mainnet 2)Devnet 3)Testnet, default to 1)Mainnet."
+    "The Core network to transmit the stake transaction to, choose between 1~4. 1)Mainnet 2)Devnet 3)Testnet 4)Testnet2, default to 1)Mainnet."
   )
   .requiredOption(
     "-lt, --locktime <locktime>",
@@ -106,11 +106,16 @@ program
     "The Bitcoin RPC service to use, default to https://mempool.space/. "
   )
   .option(
+    "-bn, --bitcoinnetwork <bitcoinnetwork>",
+    "The Bitcoin network to operate on, choose between 1~3. 1)Mainnet 2)Testnet 3)Testnet4, default to 1)Mainnet. It should align with the account."
+  )
+  .option(
     "--fee <fee>",
     "Transaction fee s)slow a)average f)fast, please choose in (s, a ,f) OR a customized number in SAT, default to a)average."
   )
   .action(async (args) => {
     const fee = FeeSpeedMap[args.fee];
+    const bitcoinnetwork = BitcoinNetworkMap[args.bitcoinnetwork];
 
     await redeem({
       account: args.account,
@@ -119,6 +124,7 @@ program
       destAddress: args.destaddress,
       bitcoinRpc: args.bitcoinRpc,
       fee: fee || args.fee,
+      bitcoinNetwork: bitcoinnetwork,
     });
   });
 

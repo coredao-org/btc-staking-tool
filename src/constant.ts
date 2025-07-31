@@ -43,6 +43,7 @@ export interface Network {
 export const BitcoinNetworks: Record<string, Network> = {
   mainnet: { chainId: 0, label: "LIVENET", name: "livenet" },
   testnet: { chainId: 1, label: "TESTNET", name: "testnet" },
+  testnet4: { chainId: 1, label: "TESTNET4", name: "testnet4" },
 };
 export const CoreChainNetworks: Record<string, Network> = {
   mainnet: {
@@ -54,6 +55,11 @@ export const CoreChainNetworks: Record<string, Network> = {
     chainId: 1115,
     label: "TESTNET",
     name: "testnet",
+  },
+  testnet2: {
+    chainId: 1114,
+    label: "TESTNET2",
+    name: "testnet2",
   },
   devnet: {
     chainId: 1112,
@@ -68,12 +74,14 @@ export type FeeSpeedType = "slow" | "avg" | "fast";
 export const BitcoinNetworkMap: Record<number, string> = {
   1: "mainnet",
   2: "testnet",
+  3: "testnet4"
 };
 
 export const CoreNetworkMap: Record<number, string> = {
   1: "mainnet",
   2: "devnet",
   3: "testnet",
+  4: "testnet2"
 };
 
 export const FeeSpeedMap: Record<string, string> = {

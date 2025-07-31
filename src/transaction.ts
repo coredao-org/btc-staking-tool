@@ -83,13 +83,13 @@ export const buildStakeTransaction = async ({
   redeemScript: string;
 }> => {
   const chainId = CoreChainNetworks[coreNetwork].chainId;
+
   const network =
     bitcoinNetwork == "mainnet"
       ? bitcoin.networks.bitcoin
       : bitcoin.networks.testnet;
-
   const provider = new Provider({
-    network,
+    network: bitcoinNetwork,
     bitcoinRpc,
   });
 
@@ -319,6 +319,7 @@ export type RedeemParams = {
   privateKey: string; // Private key
   destAddress: string; // Destination address
   bitcoinRpc: string; // Bitcoin RPC endpoint
+  bitcoinNetwork: string; // Bitcoin network type
 } & FeeParams;
 
 /**
@@ -333,6 +334,7 @@ export const buildRedeemTransaction = async ({
   destAddress,
   bitcoinRpc,
   fee,
+  bitcoinNetwork,
 }: RedeemParams) => {
   let network;
   let witness = false;
@@ -358,8 +360,15 @@ export const buildRedeemTransaction = async ({
     cltvScript: redeemScript,
   });
 
+  if (
+    (network === bitcoin.networks.bitcoin && bitcoinNetwork !== "mainnet") ||
+    (network === bitcoin.networks.testnet && bitcoinNetwork == "mainnet")
+  ) {
+    throw new Error("The format of address does not match bitcoin network, please check --bitcoinnetwork");
+  }
+
   const provider = new Provider({
-    network,
+    network: bitcoinNetwork,
     bitcoinRpc,
   });
 

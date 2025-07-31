@@ -4,6 +4,7 @@ export function getAddressType(
   address: string,
   network = bitcoin.networks.bitcoin
 ) {
+
   if (address.startsWith(`${network.bech32}1p`)) {
     bitcoin.address.fromBech32(address);
     return "p2tr";

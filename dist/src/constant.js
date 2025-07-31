@@ -39,6 +39,7 @@ var AddressType;
 exports.BitcoinNetworks = {
     mainnet: { chainId: 0, label: "LIVENET", name: "livenet" },
     testnet: { chainId: 1, label: "TESTNET", name: "testnet" },
+    testnet4: { chainId: 1, label: "TESTNET4", name: "testnet4" },
 };
 exports.CoreChainNetworks = {
     mainnet: {
@@ -51,6 +52,11 @@ exports.CoreChainNetworks = {
         label: "TESTNET",
         name: "testnet",
     },
+    testnet2: {
+        chainId: 1114,
+        label: "TESTNET2",
+        name: "testnet2",
+    },
     devnet: {
         chainId: 1112,
         label: "DEVNET",
@@ -61,11 +67,13 @@ exports.LOCKTIME_THRESHOLD = 0x1dcd6500; // 500000000
 exports.BitcoinNetworkMap = {
     1: "mainnet",
     2: "testnet",
+    3: "testnet4"
 };
 exports.CoreNetworkMap = {
     1: "mainnet",
     2: "devnet",
     3: "testnet",
+    4: "testnet2"
 };
 exports.FeeSpeedMap = {
     s: "slow",

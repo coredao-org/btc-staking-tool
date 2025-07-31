@@ -47,8 +47,8 @@ program
     .requiredOption("-acc, --account <account>", "The Bitcon address used to stake.")
     .requiredOption("-privkey, --privatekey <privatekey>", "The private key used to sign the transaction, which should be associated with --account. Hex format.")
     .requiredOption("-amt, --amount <amount>", "Amount of BTC to stake, measured in SAT.")
-    .option("-bn, --bitcoinnetwork <bitcoinnetwork>", "The Bitcoin network to operate on, choose between 1~2. 1)Mainnet 2)Testnet, default to 1)Mainnet.")
-    .option("-cn, --corenetwork <corenetwork>", "The Core network to transmit the stake transaction to, choose between 1~3. 1)Mainnet 2)Devnet 3)Testnet, default to 1)Mainnet.")
+    .option("-bn, --bitcoinnetwork <bitcoinnetwork>", "The Bitcoin network to operate on, choose between 1~3. 1)Mainnet 2)Testnet 3)Testnet4, default to 1)Mainnet.")
+    .option("-cn, --corenetwork <corenetwork>", "The Core network to transmit the stake transaction to, choose between 1~4. 1)Mainnet 2)Devnet 3)Testnet 4)Testnet2, default to 1)Mainnet.")
     .requiredOption("-lt, --locktime <locktime>", "The unix timestamp in seconds to lock the BTC assets up to. e.g. 1711983981")
     .option("-pubkey, --publickey <publickey>", "The public key used to redeem the BTC assets when locktime expires. Default to the public key associated with --privatekey.")
     .requiredOption("-raddr, --rewardaddress <rewardaddress>", "Core address used to claim staking rewards.")
@@ -83,9 +83,11 @@ program
     .requiredOption("-privkey, --privatekey <privatekey>", "The private key associated --publickey in the stake action. Hex format.")
     .requiredOption("-d, --destaddress <destaddress>", "The Bitcoin address to receive the redeemed BTC assets.")
     .option("-br, --bitcoinrpc <bitcoinrpc>", "The Bitcoin RPC service to use, default to https://mempool.space/. ")
+    .option("-bn, --bitcoinnetwork <bitcoinnetwork>", "The Bitcoin network to operate on, choose between 1~3. 1)Mainnet 2)Testnet 3)Testnet4, default to 1)Mainnet. It should align with the account.")
     .option("--fee <fee>", "Transaction fee s)slow a)average f)fast, please choose in (s, a ,f) OR a customized number in SAT, default to a)average.")
     .action((args) => __awaiter(void 0, void 0, void 0, function* () {
     const fee = constant_1.FeeSpeedMap[args.fee];
+    const bitcoinnetwork = constant_1.BitcoinNetworkMap[args.bitcoinnetwork];
     yield (0, redeem_1.redeem)({
         account: args.account,
         redeemScript: args.redeemscript,
@@ -93,6 +95,7 @@ program
         destAddress: args.destaddress,
         bitcoinRpc: args.bitcoinRpc,
         fee: fee || args.fee,
+        bitcoinNetwork: bitcoinnetwork,
     });
 }));
 program.parse(process.argv);

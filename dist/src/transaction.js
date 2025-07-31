@@ -63,7 +63,7 @@ const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* 
         ? bitcoin.networks.bitcoin
         : bitcoin.networks.testnet;
     const provider = new provider_1.Provider({
-        network,
+        network: bitcoinNetwork,
         bitcoinRpc,
     });
     const bytesFee = yield provider.getFeeRate(fee);
@@ -239,7 +239,7 @@ exports.buildStakeTransaction = buildStakeTransaction;
  * @param {RedeemParams} params - Redeem parameters
  * @returns {Promise<{ txId: string }>} - Transaction ID
  */
-const buildRedeemTransaction = (_b) => __awaiter(void 0, [_b], void 0, function* ({ account, redeemScript, privateKey, destAddress, bitcoinRpc, fee, }) {
+const buildRedeemTransaction = (_b) => __awaiter(void 0, [_b], void 0, function* ({ account, redeemScript, privateKey, destAddress, bitcoinRpc, fee, bitcoinNetwork, }) {
     let network;
     let witness = false;
     if (account.length === 34 || account.length === 35) {
@@ -262,8 +262,12 @@ const buildRedeemTransaction = (_b) => __awaiter(void 0, [_b], void 0, function*
         witness,
         cltvScript: redeemScript,
     });
+    if ((network === bitcoin.networks.bitcoin && bitcoinNetwork !== "mainnet") ||
+        (network === bitcoin.networks.testnet && bitcoinNetwork == "mainnet")) {
+        throw new Error("The format of address does not match bitcoin network, please check --bitcoinnetwork");
+    }
     const provider = new provider_1.Provider({
-        network,
+        network: bitcoinNetwork,
         bitcoinRpc,
     });
     const bytesFee = yield provider.getFeeRate(fee);

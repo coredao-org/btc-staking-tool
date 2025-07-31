@@ -6,6 +6,7 @@ export const redeem = async ({
   privateKey,
   destAddress,
   bitcoinRpc = "mempool",
+  bitcoinNetwork = "mainnet",
   fee = "avg",
 }: RedeemParams) => {
   if (!account) {
@@ -31,6 +32,7 @@ export const redeem = async ({
     destAddress,
     bitcoinRpc,
     fee,
+    bitcoinNetwork,
   });
   console.log(`txId: ${txId}`);
 };
