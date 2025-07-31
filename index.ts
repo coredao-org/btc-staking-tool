@@ -23,9 +23,9 @@ program
     "-privkey, --privatekey <privatekey>",
     "The private key used to sign the transaction, which should be associated with --account. Hex format."
   )
-  .requiredOption(
+  .option(
     "-amt, --amount <amount>",
-    "Amount of BTC to stake, measured in SAT."
+    "Amount of BTC to stake, measured in SAT, default to all amount of BTC"
   )
 
   .option(
@@ -59,7 +59,11 @@ program
   )
   .option(
     "--fee <fee>",
-    "Transaction fee s)slow a)average f)fast, please choose in (s, a ,f) OR a customized number in SAT, default to a)average."
+    "Transaction fee in every bytes s)slow a)average f)fast, please choose in (s, a ,f) OR a customized number in SAT, default to a)average."
+  )
+  .option(
+    "-r, --redeemscript <redeemscript>",
+    "The redeem script which was returned in the stake action."
   )
   .action(async (args) => {
     const bitcoinnetwork = BitcoinNetworkMap[args.bitcoinnetwork];
@@ -79,6 +83,7 @@ program
       witness: args.witness,
       bitcoinRpc: args.bitcoinrpc,
       fee: fee || args.fee,
+      redeemScript: args.redeemscript,
     });
   });
 
