@@ -1,7 +1,7 @@
-import { RedeemScriptType, LOCKTIME_THRESHOLD } from "./constant";
-import { buildStakeTransaction, StakeParams } from "./transaction";
 import Bignumber from "bignumber.js";
-
+import { LOCKTIME_THRESHOLD, RedeemScriptType } from "./constant";
+import { buildStakeTransaction, StakeParams } from "./transaction";
+import { validateChannelID } from "./utils";
 export const stake = async ({
   witness = false,
   lockTime,
@@ -17,6 +17,7 @@ export const stake = async ({
   fee = "avg",
   redeemScript,
   m,
+  channelID
 }: Omit<StakeParams, "chainId" | "type" | "privateKey" | "publicKey"> & {
   privateKey: string;
   publicKey?: string;
@@ -47,6 +48,12 @@ export const stake = async ({
   if (!rewardAddress) {
     throw new Error("rewardAddress should not be empty");
   }
+
+  if(channelID){
+    validateChannelID(channelID);
+  }
+
+
   const publicKeys = publicKey?.split(",").map((item: string) => item.trim());
   const privateKeys = privateKey.split(",").map((item: string) => item.trim());
   const isLockToMultiSig = publicKeys && publicKeys?.length >= 2 && !!m;
@@ -69,6 +76,7 @@ export const stake = async ({
       ? RedeemScriptType.MULTI_SIG_SCRIPT
       : RedeemScriptType.PUBLIC_KEY_HASH_SCRIPT,
     m,
+    channelID
   });
   console.log(`txId: ${txId}`);
   console.log(`address: ${scriptAddress}`);

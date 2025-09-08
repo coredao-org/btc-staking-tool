@@ -19,6 +19,7 @@
   "devDependencies": {
     "@types/node": "20.11.26",
     "commander": "12.0.0",
+    "nodemon": "^3.1.10",
     "typescript": "5.4.2"
   },
   "dependencies": {
@@ -31,5 +32,6 @@
     "patch-package": "8.0.0",
     "regtest-client": "0.2.1",
     "tiny-secp256k1": "2.2.3"
-  }
+  },
+  "packageManager": "pnpm@10.10.0+sha1.f657bc37aa5e08da2ecff3877fe3bbb4b13703ba"
 }

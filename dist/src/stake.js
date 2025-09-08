@@ -13,10 +13,11 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.stake = void 0;
+const bignumber_js_1 = __importDefault(require("bignumber.js"));
 const constant_1 = require("./constant");
 const transaction_1 = require("./transaction");
-const bignumber_js_1 = __importDefault(require("bignumber.js"));
-const stake = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness = false, lockTime, account, amount, validatorAddress, rewardAddress, privateKey, publicKey, coreNetwork = "mainnet", bitcoinNetwork = "mainnet", bitcoinRpc = "mempool", fee = "avg", redeemScript, m, }) {
+const utils_1 = require("./utils");
+const stake = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness = false, lockTime, account, amount, validatorAddress, rewardAddress, privateKey, publicKey, coreNetwork = "mainnet", bitcoinNetwork = "mainnet", bitcoinRpc = "mempool", fee = "avg", redeemScript, m, channelID }) {
     if (!lockTime) {
         throw new Error("LockTime should not be empty");
     }
@@ -37,6 +38,9 @@ const stake = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness = fal
     }
     if (!rewardAddress) {
         throw new Error("rewardAddress should not be empty");
+    }
+    if (channelID) {
+        (0, utils_1.validateChannelID)(channelID);
     }
     const publicKeys = publicKey === null || publicKey === void 0 ? void 0 : publicKey.split(",").map((item) => item.trim());
     const privateKeys = privateKey.split(",").map((item) => item.trim());
@@ -59,6 +63,7 @@ const stake = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness = fal
             ? constant_1.RedeemScriptType.MULTI_SIG_SCRIPT
             : constant_1.RedeemScriptType.PUBLIC_KEY_HASH_SCRIPT,
         m,
+        channelID
     });
     console.log(`txId: ${txId}`);
     console.log(`address: ${scriptAddress}`);

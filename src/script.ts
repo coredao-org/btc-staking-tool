@@ -1,8 +1,8 @@
-import * as bitcoin from "bitcoinjs-lib";
-import { RedeemScriptType } from "./constant";
-import { convertToHex } from "./utils";
 import { PsbtInput } from "bip174/src/lib/interfaces";
+import * as bitcoin from "bitcoinjs-lib";
 import { witnessStackToScriptWitness } from "bitcoinjs-lib/src/psbt/psbtutils";
+import { RedeemScriptType } from "./constant";
+import { convertToHex, encodeVarInt } from "./utils";
 
 const network = bitcoin.networks.testnet;
 type PublicKey = string | Buffer;
@@ -223,6 +223,7 @@ export interface OPReturnScriptOption {
   isMultisig: boolean;
   lockTime: number;
   redeemScriptType: RedeemScriptType;
+  channelID?: string;
 }
 
 export const buildOPReturnScript = ({
@@ -234,9 +235,12 @@ export const buildOPReturnScript = ({
   isMultisig,
   lockTime,
   redeemScriptType,
+  channelID,
 }: OPReturnScriptOption) => {
   const flagHex = convertToHex("SAT+").padStart(8, "0");
-  const versionHex = Number(1).toString(16).padStart(2, "0");
+  const versionHex = Number(channelID ? 2 : 1)
+    .toString(16)
+    .padStart(2, "0");
   const chainIdHex = Number(chainId).toString(16).padStart(4, "0");
   const rewardAddressHex = rewardAddress
     .replace("0x", "")
@@ -246,13 +250,18 @@ export const buildOPReturnScript = ({
     .replace("0x", "")
     .toLowerCase()
     .padStart(40, "0");
+
+  const channelIDHex = channelID
+    ? encodeVarInt(channelID).replace("0x", "").toLowerCase()
+    : "";
+
   const coreFeeHex = Number(coreFee).toString(16).padStart(2, "0");
   const lockTimeHex = bitcoin.script.number
     .encode(lockTime)
     .toString("hex")
     .padStart(8, "0");
 
-  const hex = `${flagHex}${versionHex}${chainIdHex}${rewardAddressHex}${validatorAddressHex}${coreFeeHex}${
+  const hex = `${flagHex}${versionHex}${chainIdHex}${rewardAddressHex}${validatorAddressHex}${channelIDHex}${coreFeeHex}${
     redeemScriptType === RedeemScriptType.PUBLIC_KEY_HASH_SCRIPT && !isMultisig
       ? redeemScript.toString("hex")
       : lockTimeHex

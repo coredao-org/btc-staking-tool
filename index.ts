@@ -1,9 +1,9 @@
 #!/usr/bin/env node
 
 import * as commander from "commander";
-import { stake } from "./src/stake";
-import { redeem } from "./src/redeem";
 import { BitcoinNetworkMap, CoreNetworkMap, FeeSpeedMap } from "./src/constant";
+import { redeem } from "./src/redeem";
+import { stake } from "./src/stake";
 
 const program = new commander.Command();
 
@@ -70,6 +70,10 @@ program
     "-r, --redeemscript <redeemscript>",
     "The redeem script which was returned in the stake action or was the redeem script of multi signature address."
   )
+  .option(
+    "-cid, --channelid <channelid>",
+    "The channel ID to stake from, should be a number between 1 and 18446744073709551615"
+  )
   .action(async (args) => {
     const bitcoinnetwork = BitcoinNetworkMap[args.bitcoinnetwork];
     const corenetwork = CoreNetworkMap[args.corenetwork];
@@ -90,6 +94,7 @@ program
       fee: fee || args.fee,
       redeemScript: args.redeemscript,
       m: args.m,
+      channelID: args.channelid,
     });
   });
 
