@@ -36,18 +36,17 @@ var __importDefault = (this && this.__importDefault) || function (mod) {
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.buildRedeemTransaction = exports.buildStakeTransaction = void 0;
-const constant_1 = require("./constant");
+const bignumber_js_1 = __importDefault(require("bignumber.js"));
 const bitcoin = __importStar(require("bitcoinjs-lib"));
 const bip371_1 = require("bitcoinjs-lib/src/psbt/bip371");
-const bignumber_js_1 = __importDefault(require("bignumber.js"));
-const script_1 = require("./script");
-const provider_1 = require("./provider");
 const coinselect_segwit_1 = __importDefault(require("coinselect-segwit"));
 const split_1 = __importDefault(require("coinselect-segwit/split"));
-const ecc = __importStar(require("tiny-secp256k1"));
 const ecpair_1 = __importDefault(require("ecpair"));
-const constant_2 = require("./constant");
+const ecc = __importStar(require("tiny-secp256k1"));
 const address_1 = require("./address");
+const constant_1 = require("./constant");
+const provider_1 = require("./provider");
+const script_1 = require("./script");
 const utils_1 = require("./utils");
 // Initialize the elliptic curve library
 const ECPair = (0, ecpair_1.default)(ecc);
@@ -58,8 +57,8 @@ const validatorSignature = (pubkey, msghash, signature) => ECPair.fromPublicKey(
  * @param {StakeParams} params - Stake parameters
  * @returns {Promise<{ txId: string; scriptAddress: string; cltvScript: string; }>} - Transaction ID, script address, and CLTV script
  */
-const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness, lockTime, account, amount, validatorAddress, rewardAddress, publicKey, privateKey, bitcoinNetwork, coreNetwork, bitcoinRpc, fee, redeemScript, m, type, }) {
-    const chainId = constant_2.CoreChainNetworks[coreNetwork].chainId;
+const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness, lockTime, account, amount, validatorAddress, rewardAddress, publicKey, privateKey, bitcoinNetwork, coreNetwork, bitcoinRpc, fee, redeemScript, m, type, channelID, }) {
+    const chainId = constant_1.CoreChainNetworks[coreNetwork].chainId;
     const network = bitcoinNetwork == "mainnet"
         ? bitcoin.networks.bitcoin
         : bitcoin.networks.testnet;
@@ -245,6 +244,7 @@ const buildStakeTransaction = (_a) => __awaiter(void 0, [_a], void 0, function* 
                 isMultisig: type === constant_1.RedeemScriptType.MULTI_SIG_SCRIPT,
                 lockTime,
                 redeemScriptType: type,
+                channelID,
             }),
             value: 0,
         },

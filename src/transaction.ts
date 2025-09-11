@@ -1,21 +1,19 @@
-import { RedeemScriptType } from "./constant";
+import Bignumber from "bignumber.js";
 import * as bitcoin from "bitcoinjs-lib";
 import { toXOnly } from "bitcoinjs-lib/src/psbt/bip371";
-import Bignumber from "bignumber.js";
+import coinSelect from "coinselect-segwit";
+import split from "coinselect-segwit/split";
+import ECPairFactory from "ecpair";
+import * as ecc from "tiny-secp256k1";
+import { getAddressType } from "./address";
+import { CoreChainNetworks, FeeSpeedType, RedeemScriptType } from "./constant";
+import { Provider } from "./provider";
 import {
   buildOPReturnScript,
   CLTVScript,
-  parseCLTVScript,
   finalCLTVScripts,
+  parseCLTVScript,
 } from "./script";
-import { Provider } from "./provider";
-import coinSelect from "coinselect-segwit";
-import split from "coinselect-segwit/split";
-import * as ecc from "tiny-secp256k1";
-import ECPairFactory from "ecpair";
-import { CoreChainNetworks, FeeSpeedType } from "./constant";
-import { getAddressType } from "./address";
-import { redeem } from "./redeem";
 import { isMultisigScript } from "./utils";
 // Initialize the elliptic curve library
 const ECPair = ECPairFactory(ecc);
@@ -58,6 +56,7 @@ export type StakeParams = {
   account: string; // Account address
   redeemScript?: Buffer | string; // Redeem script
   m?: number; //The minimum number of signatures required to authorize a transaction from the set of n public keys.
+  channelID?: string;
 } & NetworkParams &
   FeeParams;
 
@@ -82,6 +81,7 @@ export const buildStakeTransaction = async ({
   redeemScript,
   m,
   type,
+  channelID,
 }: StakeParams): Promise<{
   txId: string;
   scriptAddress: string;
@@ -319,6 +319,7 @@ export const buildStakeTransaction = async ({
         isMultisig: type === RedeemScriptType.MULTI_SIG_SCRIPT,
         lockTime,
         redeemScriptType: type,
+        channelID,
       }),
       value: 0,
     },
@@ -503,7 +504,9 @@ export const buildRedeemTransaction = async ({
     (network === bitcoin.networks.bitcoin && bitcoinNetwork !== "mainnet") ||
     (network === bitcoin.networks.testnet && bitcoinNetwork == "mainnet")
   ) {
-    throw new Error("The format of address does not match bitcoin network, please check --bitcoinnetwork");
+    throw new Error(
+      "The format of address does not match bitcoin network, please check --bitcoinnetwork"
+    );
   }
 
   const provider = new Provider({

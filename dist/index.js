@@ -34,9 +34,9 @@ var __awaiter = (this && this.__awaiter) || function (thisArg, _arguments, P, ge
 };
 Object.defineProperty(exports, "__esModule", { value: true });
 const commander = __importStar(require("commander"));
-const stake_1 = require("./src/stake");
-const redeem_1 = require("./src/redeem");
 const constant_1 = require("./src/constant");
+const redeem_1 = require("./src/redeem");
+const stake_1 = require("./src/stake");
 const program = new commander.Command();
 program
     .version("1.0.0")
@@ -58,6 +58,7 @@ program
     .option("-br, --bitcoinrpc <bitcoinrpc>", "The Bitcoin RPC service to use, default to https://mempool.space/. ")
     .option("--fee <fee>", "Transaction fee in every bytes s)slow a)average f)fast, please choose in (s, a ,f) OR a customized number in SAT, default to a)average.")
     .option("-r, --redeemscript <redeemscript>", "The redeem script which was returned in the stake action or was the redeem script of multi signature address.")
+    .option("-cid, --channelid <channelid>", "The channel ID to stake from, should be a number between 1 and 18446744073709551615")
     .action((args) => __awaiter(void 0, void 0, void 0, function* () {
     const bitcoinnetwork = constant_1.BitcoinNetworkMap[args.bitcoinnetwork];
     const corenetwork = constant_1.CoreNetworkMap[args.corenetwork];
@@ -77,6 +78,7 @@ program
         fee: fee || args.fee,
         redeemScript: args.redeemscript,
         m: args.m,
+        channelID: args.channelid,
     });
 }));
 program

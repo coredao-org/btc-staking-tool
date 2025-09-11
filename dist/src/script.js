@@ -25,9 +25,9 @@ var __importStar = (this && this.__importStar) || function (mod) {
 Object.defineProperty(exports, "__esModule", { value: true });
 exports.finalCLTVScripts = exports.buildOPReturnScript = exports.CLTVScript = exports.parseCLTVScript = exports.buildCLTVScript = exports.Script = void 0;
 const bitcoin = __importStar(require("bitcoinjs-lib"));
+const psbtutils_1 = require("bitcoinjs-lib/src/psbt/psbtutils");
 const constant_1 = require("./constant");
 const utils_1 = require("./utils");
-const psbtutils_1 = require("bitcoinjs-lib/src/psbt/psbtutils");
 const network = bitcoin.networks.testnet;
 const OPS = bitcoin.script.OPS;
 exports.Script = {
@@ -192,9 +192,11 @@ exports.CLTVScript = {
     },
 };
 const buildOPReturnScript = ({ chainId, validatorAddress, rewardAddress, // 20 bytes
-redeemScript, coreFee, isMultisig, lockTime, redeemScriptType, }) => {
+redeemScript, coreFee, isMultisig, lockTime, redeemScriptType, channelID, }) => {
     const flagHex = (0, utils_1.convertToHex)("SAT+").padStart(8, "0");
-    const versionHex = Number(1).toString(16).padStart(2, "0");
+    const versionHex = Number(channelID ? 2 : 1)
+        .toString(16)
+        .padStart(2, "0");
     const chainIdHex = Number(chainId).toString(16).padStart(4, "0");
     const rewardAddressHex = rewardAddress
         .replace("0x", "")
@@ -204,12 +206,15 @@ redeemScript, coreFee, isMultisig, lockTime, redeemScriptType, }) => {
         .replace("0x", "")
         .toLowerCase()
         .padStart(40, "0");
+    const channelIDHex = channelID
+        ? (0, utils_1.encodeVarInt)(channelID).replace("0x", "").toLowerCase()
+        : "";
     const coreFeeHex = Number(coreFee).toString(16).padStart(2, "0");
     const lockTimeHex = bitcoin.script.number
         .encode(lockTime)
         .toString("hex")
         .padStart(8, "0");
-    const hex = `${flagHex}${versionHex}${chainIdHex}${rewardAddressHex}${validatorAddressHex}${coreFeeHex}${redeemScriptType === constant_1.RedeemScriptType.PUBLIC_KEY_HASH_SCRIPT && !isMultisig
+    const hex = `${flagHex}${versionHex}${chainIdHex}${rewardAddressHex}${validatorAddressHex}${channelIDHex}${coreFeeHex}${redeemScriptType === constant_1.RedeemScriptType.PUBLIC_KEY_HASH_SCRIPT && !isMultisig
         ? redeemScript.toString("hex")
         : lockTimeHex}`;
     return exports.Script.EMBED(hex);
