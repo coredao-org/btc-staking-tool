@@ -45,7 +45,7 @@ program
     .command("stake")
     .description("Stake BTC")
     .requiredOption("-acc, --account <account>", "The Bitcon address used to stake.")
-    .requiredOption("-privkey, --privatekey <privatekey>", "The private key used to sign the transaction, which should be associated with --account, separated by commas. Hex format.")
+    .option("-privkey, --privatekey <privatekey>", "The private key used to sign the transaction, which should be associated with --account, separated by commas. Hex format.")
     .option("-amt, --amount <amount>", "Amount of BTC to stake, measured in SAT, default to all amount of BTC")
     .option("-bn, --bitcoinnetwork <bitcoinnetwork>", "The Bitcoin network to operate on, choose between 1~3. 1)Mainnet 2)Testnet 3)Testnet4, default to 1)Mainnet.")
     .option("-cn, --corenetwork <corenetwork>", "The Core network to transmit the stake transaction to, choose between 1~4. 1)Mainnet 2)Devnet 3)Testnet 4)Testnet2, default to 1)Mainnet.")

@@ -19,7 +19,7 @@ program
     "-acc, --account <account>",
     "The Bitcon address used to stake."
   )
-  .requiredOption(
+  .option(
     "-privkey, --privatekey <privatekey>",
     "The private key used to sign the transaction, which should be associated with --account, separated by commas. Hex format."
   )

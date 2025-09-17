@@ -1,3 +1,4 @@
+import { bech32 } from "bech32";
 import Bignumber from "bignumber.js";
 import * as bitcoin from "bitcoinjs-lib";
 import { toXOnly } from "bitcoinjs-lib/src/psbt/bip371";
@@ -50,7 +51,7 @@ export type StakeParams = {
   validatorAddress: string; // Validator's address
   rewardAddress: string; // Reward address
   type: RedeemScriptType; // Redeem script type
-  privateKey: string[]; // Private key
+  privateKey?: string[]; // Private key
   publicKey?: string[]; // Public key fro lock script
   witness?: boolean; // Whether to use witness
   account: string; // Account address
@@ -86,6 +87,7 @@ export const buildStakeTransaction = async ({
   txId: string;
   scriptAddress: string;
   script: string;
+  unsignedTx?: string;
 }> => {
   const chainId = CoreChainNetworks[coreNetwork].chainId;
 
@@ -103,51 +105,65 @@ export const buildStakeTransaction = async ({
 
   const bytesFee = await provider.getFeeRate(fee);
 
-  const keyPairs = privateKey.map((priv) =>
+  const keyPairs = privateKey?.map((priv) =>
     ECPair.fromPrivateKey(Buffer.from(priv, "hex"))
   );
 
   if (!publicKey || !publicKey.length) {
-    publicKey = keyPairs.map((keyPair) => keyPair.publicKey.toString("hex"));
+    publicKey = keyPairs?.map((keyPair) => keyPair.publicKey.toString("hex"));
   }
 
-  const keyPair = keyPairs[0];
+  const keyPair = keyPairs?.[0];
 
   let payment;
-
   let addressType = getAddressType(account, network, redeemScript);
+  const output = bitcoin.address.toOutputScript(account, network);
 
-  if (addressType === "p2pkh") {
-    payment = bitcoin.payments.p2pkh({
-      pubkey: keyPair.publicKey,
-      network,
-    });
-  } else if (addressType === "p2wpkh") {
-    payment = bitcoin.payments.p2wpkh({
-      pubkey: keyPair.publicKey,
-      network,
-    });
-  } else if (addressType === "p2sh-p2wpkh") {
-    payment = bitcoin.payments.p2sh({
-      redeem: bitcoin.payments.p2wpkh({
+  const paymentOptions = keyPair
+    ? {
         pubkey: keyPair.publicKey,
         network,
-      }),
+      }
+    : {
+        output: output,
+        address: account,
+        network,
+      };
+
+  if (addressType === "p2pkh") {
+    payment = bitcoin.payments.p2pkh(paymentOptions);
+  } else if (addressType === "p2wpkh") {
+    payment = bitcoin.payments.p2wpkh(paymentOptions);
+  } else if (addressType === "p2sh-p2wpkh") {
+    payment = bitcoin.payments.p2sh({
+      redeem: bitcoin.payments.p2wpkh(paymentOptions),
       network,
     });
   } else if (addressType === "p2tr") {
-    bitcoin.initEccLib(ecc);
-    payment = bitcoin.payments.p2tr({
-      internalPubkey: toXOnly(keyPair.publicKey),
-      ...(redeemScript
-        ? {
-            scriptTree: {
-              output: Buffer.from(redeemScript.toString("hex"), "hex"),
-            },
-          }
-        : {}),
-      network,
-    });
+    if (!keyPair) {
+      const { words } = bech32.decode(account);
+      const ver = words[0]; // witness version
+      if (ver === 1) {
+        // taproot detected — bitcoinjs-lib's p2tr may not accept output as input in some versions
+        // return a minimal representation
+        payment = bitcoin.payments.p2tr({ output, address: account, network });
+      } else {
+        throw new Error("taproot version is not supported");
+      }
+    } else {
+      bitcoin.initEccLib(ecc);
+      payment = bitcoin.payments.p2tr({
+        internalPubkey: toXOnly(keyPair.publicKey),
+        ...(redeemScript
+          ? {
+              scriptTree: {
+                output: Buffer.from(redeemScript.toString("hex"), "hex"),
+              },
+            }
+          : {}),
+        network,
+      });
+    }
   } else if (redeemScript) {
     //p2sh/p2wsh
     const redeemScriptBuf = Buffer.from(redeemScript.toString("hex"), "hex");
@@ -254,6 +270,10 @@ export const buildStakeTransaction = async ({
   //time lock script
   let script;
 
+  if (!publicKey || !publicKey.length) {
+    throw new Error("Either publick key or private key should be supported");
+  }
+
   //P2PKH
   if (type === RedeemScriptType.PUBLIC_KEY_HASH_SCRIPT) {
     script = CLTVScript.P2PKH({
@@ -352,8 +372,10 @@ export const buildStakeTransaction = async ({
       }
     });
   } else if (isCommonMultiSig) {
+    //for unsigned mode, we assume only one private key.
     inputs!.forEach(() => {
-      signatureSize += (72 * privateKey.length) / (witness ? 4 : 1);
+      signatureSize +=
+        (72 * (privateKey ? privateKey.length : 1)) / (witness ? 4 : 1);
     });
   }
 
@@ -415,39 +437,45 @@ export const buildStakeTransaction = async ({
     });
   });
 
-  keyPairs.forEach((keyPair) => {
-    if (addressType.includes("p2tr")) {
-      const signer = keyPair.tweak(
-        bitcoin.crypto.taggedHash("TapTweak", toXOnly(keyPair.publicKey))
-      );
-      psbt.signAllInputs(signer);
-    } else {
-      psbt.signAllInputs(keyPair);
-    }
-  });
-
-  if (
-    !addressType.includes("p2tr") &&
-    !psbt.validateSignaturesOfAllInputs(validatorSignature)
-  ) {
-    throw new Error("signature is invalid");
-  }
-
-  if (isRestaking) {
-    psbt.txInputs.forEach((input, idx) => {
-      psbt.finalizeInput(idx, finalCLTVScripts);
+  if (keyPairs) {
+    keyPairs.forEach((keyPair) => {
+      if (addressType.includes("p2tr")) {
+        const signer = keyPair.tweak(
+          bitcoin.crypto.taggedHash("TapTweak", toXOnly(keyPair.publicKey))
+        );
+        psbt.signAllInputs(signer);
+      } else {
+        psbt.signAllInputs(keyPair);
+      }
     });
+    if (
+      !addressType.includes("p2tr") &&
+      !psbt.validateSignaturesOfAllInputs(validatorSignature)
+    ) {
+      throw new Error("signature is invalid");
+    }
+    if (isRestaking) {
+      psbt.txInputs.forEach((input, idx) => {
+        psbt.finalizeInput(idx, finalCLTVScripts);
+      });
+    } else {
+      psbt.finalizeAllInputs();
+    }
+    const txId = await provider.broadcast(psbt.extractTransaction().toHex());
+
+    return {
+      txId,
+      scriptAddress,
+      script: script.toString("hex"),
+    };
   } else {
-    psbt.finalizeAllInputs();
+    return {
+      unsignedTx: psbt.toHex(),
+      txId: "",
+      scriptAddress,
+      script: script.toString("hex"),
+    };
   }
-
-  const txId = await provider.broadcast(psbt.extractTransaction().toHex());
-
-  return {
-    txId,
-    scriptAddress,
-    script: script.toString("hex"),
-  };
 };
 
 /**
