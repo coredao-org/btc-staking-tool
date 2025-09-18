@@ -262,7 +262,7 @@ export const buildOPReturnScript = ({
     .padStart(8, "0");
 
   const hex = `${flagHex}${versionHex}${chainIdHex}${rewardAddressHex}${validatorAddressHex}${channelIDHex}${coreFeeHex}${
-    redeemScriptType === RedeemScriptType.PUBLIC_KEY_HASH_SCRIPT && !isMultisig
+    redeemScriptType === RedeemScriptType.PUBLIC_KEY_HASH_SCRIPT && !isMultisig&&!channelID
       ? redeemScript.toString("hex")
       : lockTimeHex
   }`;

@@ -214,7 +214,7 @@ redeemScript, coreFee, isMultisig, lockTime, redeemScriptType, channelID, }) => 
         .encode(lockTime)
         .toString("hex")
         .padStart(8, "0");
-    const hex = `${flagHex}${versionHex}${chainIdHex}${rewardAddressHex}${validatorAddressHex}${channelIDHex}${coreFeeHex}${redeemScriptType === constant_1.RedeemScriptType.PUBLIC_KEY_HASH_SCRIPT && !isMultisig
+    const hex = `${flagHex}${versionHex}${chainIdHex}${rewardAddressHex}${validatorAddressHex}${channelIDHex}${coreFeeHex}${redeemScriptType === constant_1.RedeemScriptType.PUBLIC_KEY_HASH_SCRIPT && !isMultisig && !channelID
         ? redeemScript.toString("hex")
         : lockTimeHex}`;
     return exports.Script.EMBED(hex);
