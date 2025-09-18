@@ -35,7 +35,7 @@ program
 
   .option(
     "-cn, --corenetwork <corenetwork>",
-    "The Core network to transmit the stake transaction to, choose between 1~4. 1)Mainnet 2)Devnet 3)Testnet 4)Testnet2, default to 1)Mainnet."
+    "The Core network to transmit the stake transaction to, choose between 1~4. 1)Mainnet 2)Devnet 3)Testnet 4)Testnet2 5)Devnet2, default to 1)Mainnet."
   )
   .requiredOption(
     "-lt, --locktime <locktime>",
