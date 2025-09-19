@@ -96,6 +96,7 @@ export const buildCLTVScript = ({
   lockTime: number;
   buffer: Buffer;
 }) => {
+
   return Buffer.concat([
     bitcoin.script.compile([
       bitcoin.script.number.encode(lockTime),
@@ -182,7 +183,7 @@ export const CLTVScript = {
     if (!pubkey || !pubkey.length) {
       throw new Error("publickey should not be empty");
     }
-
+console.log('LockTime OP_CHECKLOCKTIMEVERIFY OP_DROP <pubKey> OP_CHECKSIG')
     return buildCLTVScript({
       lockTime,
       buffer: Script.P2PK({ pubkey }),
@@ -194,6 +195,7 @@ export const CLTVScript = {
     if (!pubkey || !pubkey.length) {
       throw new Error("publickey should not be empty");
     }
+    console.log('LockTime OP_CHECKLOCKTIMEVERIFY OP_DROP OP_DUP OP_HASH160 hash160(<pubKey>) OP_EQUALVERIFY OP_CHECKSIG')
     return buildCLTVScript({
       lockTime,
       buffer: Script.P2PKH({ pubkey: pubkey }),
@@ -206,7 +208,7 @@ export const CLTVScript = {
     if (!pubkeys || pubkeys.length !== n) {
       throw new Error("publickey should not be empty");
     }
-
+console.log('LockTime OP_CHECKLOCKTIMEVERIFY OP_DROP OP_<M> <pubKey>...<pubKey> OP_<N> OP_CHECKMULTISIG')
     return buildCLTVScript({
       lockTime,
       buffer: Script.P2MS({ pubkeys, m, n }),

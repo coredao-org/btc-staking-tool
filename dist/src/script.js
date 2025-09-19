@@ -163,6 +163,7 @@ exports.CLTVScript = {
         if (!pubkey || !pubkey.length) {
             throw new Error("publickey should not be empty");
         }
+        console.log('LockTime OP_CHECKLOCKTIMEVERIFY OP_DROP <pubKey> OP_CHECKSIG');
         return (0, exports.buildCLTVScript)({
             lockTime,
             buffer: exports.Script.P2PK({ pubkey }),
@@ -174,6 +175,7 @@ exports.CLTVScript = {
         if (!pubkey || !pubkey.length) {
             throw new Error("publickey should not be empty");
         }
+        console.log('LockTime OP_CHECKLOCKTIMEVERIFY OP_DROP OP_DUP OP_HASH160 hash160(<pubKey>) OP_EQUALVERIFY OP_CHECKSIG');
         return (0, exports.buildCLTVScript)({
             lockTime,
             buffer: exports.Script.P2PKH({ pubkey: pubkey }),
@@ -185,6 +187,7 @@ exports.CLTVScript = {
         if (!pubkeys || pubkeys.length !== n) {
             throw new Error("publickey should not be empty");
         }
+        console.log('LockTime OP_CHECKLOCKTIMEVERIFY OP_DROP OP_<M> <pubKey>...<pubKey> OP_<N> OP_CHECKMULTISIG');
         return (0, exports.buildCLTVScript)({
             lockTime,
             buffer: exports.Script.P2MS({ pubkeys, m, n }),
