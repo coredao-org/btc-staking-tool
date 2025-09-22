@@ -183,7 +183,7 @@ export const CLTVScript = {
     if (!pubkey || !pubkey.length) {
       throw new Error("publickey should not be empty");
     }
-console.log('LockTime OP_CHECKLOCKTIMEVERIFY OP_DROP <pubKey> OP_CHECKSIG')
+  console.log('LockTime OP_CHECKLOCKTIMEVERIFY OP_DROP <pubKey> OP_CHECKSIG')
     return buildCLTVScript({
       lockTime,
       buffer: Script.P2PK({ pubkey }),
