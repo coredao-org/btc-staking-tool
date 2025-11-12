@@ -17,7 +17,7 @@ const bignumber_js_1 = __importDefault(require("bignumber.js"));
 const constant_1 = require("./constant");
 const transaction_1 = require("./transaction");
 const utils_1 = require("./utils");
-const stake = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness = false, lockTime, account, amount, validatorAddress, rewardAddress, privateKey, publicKey, coreNetwork = "mainnet", bitcoinNetwork = "mainnet", bitcoinRpc = "mempool", fee = "avg", redeemScript, m, channelID }) {
+const stake = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness = false, lockTime, account, amount, validatorAddress, rewardAddress, privateKey, publicKey, coreNetwork = "mainnet", bitcoinNetwork = "mainnet", bitcoinRpc = "mempool", fee = "avg", redeemScript, m, channelID, }) {
     if (!lockTime) {
         throw new Error("LockTime should not be empty");
     }
@@ -30,9 +30,9 @@ const stake = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness = fal
     if (!account) {
         throw new Error("Account should not be empty");
     }
-    if (!privateKey) {
-        throw new Error("privateKey should not be empty");
-    }
+    // if (!privateKey) {
+    //   throw new Error("privateKey should not be empty");
+    // }
     if (!validatorAddress) {
         throw new Error("validatorAddress should not be empty");
     }
@@ -43,9 +43,9 @@ const stake = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness = fal
         (0, utils_1.validateChannelID)(channelID);
     }
     const publicKeys = publicKey === null || publicKey === void 0 ? void 0 : publicKey.split(",").map((item) => item.trim());
-    const privateKeys = privateKey.split(",").map((item) => item.trim());
+    const privateKeys = privateKey === null || privateKey === void 0 ? void 0 : privateKey.split(",").map((item) => item.trim());
     const isLockToMultiSig = publicKeys && (publicKeys === null || publicKeys === void 0 ? void 0 : publicKeys.length) >= 2 && !!m;
-    const { txId, scriptAddress, script } = yield (0, transaction_1.buildStakeTransaction)({
+    const { txId, scriptAddress, script, unsignedTx } = yield (0, transaction_1.buildStakeTransaction)({
         witness,
         lockTime: Number(lockTime),
         account,
@@ -63,10 +63,11 @@ const stake = (_a) => __awaiter(void 0, [_a], void 0, function* ({ witness = fal
             ? constant_1.RedeemScriptType.MULTI_SIG_SCRIPT
             : constant_1.RedeemScriptType.PUBLIC_KEY_HASH_SCRIPT,
         m,
-        channelID
+        channelID,
     });
     console.log(`txId: ${txId}`);
     console.log(`address: ${scriptAddress}`);
     console.log(`redeemScript: ${script}`);
+    console.log(`unsignedTx: ${unsignedTx !== null && unsignedTx !== void 0 ? unsignedTx : ""}`);
 });
 exports.stake = stake;

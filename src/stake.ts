@@ -17,7 +17,7 @@ export const stake = async ({
   fee = "avg",
   redeemScript,
   m,
-  channelID
+  channelID,
 }: Omit<StakeParams, "chainId" | "type" | "privateKey" | "publicKey"> & {
   privateKey: string;
   publicKey?: string;
@@ -25,8 +25,8 @@ export const stake = async ({
   if (!lockTime) {
     throw new Error("LockTime should not be empty");
   }
-  if(lockTime.toString().length>10){
-    throw new Error("LockTime should be specified in seconds")
+  if (lockTime.toString().length > 10) {
+    throw new Error("LockTime should be specified in seconds");
   }
 
   if (new Bignumber(lockTime).lte(new Bignumber(LOCKTIME_THRESHOLD))) {
@@ -37,9 +37,9 @@ export const stake = async ({
     throw new Error("Account should not be empty");
   }
 
-  if (!privateKey) {
-    throw new Error("privateKey should not be empty");
-  }
+  // if (!privateKey) {
+  //   throw new Error("privateKey should not be empty");
+  // }
 
   if (!validatorAddress) {
     throw new Error("validatorAddress should not be empty");
@@ -49,36 +49,38 @@ export const stake = async ({
     throw new Error("rewardAddress should not be empty");
   }
 
-  if(channelID){
+  if (channelID) {
     validateChannelID(channelID);
   }
 
-
   const publicKeys = publicKey?.split(",").map((item: string) => item.trim());
-  const privateKeys = privateKey.split(",").map((item: string) => item.trim());
+  const privateKeys = privateKey?.split(",").map((item: string) => item.trim());
   const isLockToMultiSig = publicKeys && publicKeys?.length >= 2 && !!m;
 
-  const { txId, scriptAddress, script } = await buildStakeTransaction({
-    witness,
-    lockTime: Number(lockTime),
-    account,
-    amount,
-    validatorAddress,
-    rewardAddress,
-    publicKey: publicKeys,
-    privateKey: privateKeys,
-    bitcoinNetwork,
-    coreNetwork,
-    bitcoinRpc,
-    fee,
-    redeemScript,
-    type: isLockToMultiSig
-      ? RedeemScriptType.MULTI_SIG_SCRIPT
-      : RedeemScriptType.PUBLIC_KEY_HASH_SCRIPT,
-    m,
-    channelID
-  });
+  const { txId, scriptAddress, script, unsignedTx } =
+    await buildStakeTransaction({
+      witness,
+      lockTime: Number(lockTime),
+      account,
+      amount,
+      validatorAddress,
+      rewardAddress,
+      publicKey: publicKeys,
+      privateKey: privateKeys,
+      bitcoinNetwork,
+      coreNetwork,
+      bitcoinRpc,
+      fee,
+      redeemScript,
+      type: isLockToMultiSig
+        ? RedeemScriptType.MULTI_SIG_SCRIPT
+        : RedeemScriptType.PUBLIC_KEY_HASH_SCRIPT,
+      m,
+      channelID,
+    });
+
   console.log(`txId: ${txId}`);
   console.log(`address: ${scriptAddress}`);
   console.log(`redeemScript: ${script}`);
+  console.log(`unsignedTx: ${unsignedTx ?? ""}`);
 };
